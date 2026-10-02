@@ -1,0 +1,138 @@
+ZAŁOŻENIA GRY
+Status: wstępny projekt z uwzględnieniem decyzji użytkownika.
+
+1. Gatunek i walka
+Gra typu bullet hell w kosmosie. Mały statek gracza rozpoczyna w dolnej części ekranu, ale może poruszać się po całym ekranie. Przedziera się przez hordy przeciwników oraz bardzo liczne pociski.
+Przeciwnicy to statki nadciągające spoza mapy, próbujące zniszczyć statek gracza. Różnią się sposobem poruszania, zachowania i ostrzału.
+Docelowo gracz korzysta z różnych rodzajów uzbrojenia. Na start gracz otrzymuje podstawowy blaster (proste działko) oraz podstawową rakietę. Obie bronie są celowane w miejsce kursora. Potwierdzenie startowej rakiety zastępuje wcześniejsze założenie o samym blasterze.
+Sterowanie: klawiatura i mysz, celowanie ręczne. Uzbrojenie aktywne korzysta z LPM/PPM i celuje w miejsce kursora. Naciśnięcie wystrzeliwuje jeden pocisk, a przytrzymanie utrzymuje ostrzał z podstawowym czasem odnowienia danej broni. Pozostałe klawisze wymagają przypisania.
+
+2. Nagrody i rozwój
+Zniszczeni przeciwnicy dają materiały i doświadczenie (EXP).
+Po każdym zdobyciu pełnego poziomu automatycznie otwiera się panel zarządzania statkiem i sklep, a walka zostaje zatrzymana na czas korzystania z panelu.
+Za materiały gracz kupuje nowe moduły.
+Za EXP gracz ulepsza już posiadane moduły. Wydawanie EXP na ulepszenia zmniejsza postęp poziomu; EXP nie jest osobnym saldem niezależnym od postępu.
+Do ustalenia: progi poziomów, ceny, sposób zbierania nagród oraz dokładne rozliczanie EXP po awansie, w tym możliwość obniżenia zdobytego poziomu i zasady ponownego osiągania tego samego progu.
+
+3. Budowa statku i mechanika modułów
+3.1. Siatka, złącza i kable
+Panel zarządzania statkiem zawiera siatkę kwadratowych pól. Moduły mają różne wymiary i można je obracać.
+W przyszłości po awansie na niektóre poziomy będzie można powiększać siatkę.
+Rozmieszczenie modułów nie zmienia wyglądu statku. Nie można trafić ani uszkodzić modułów oddzielnie.
+Każdy moduł ma złącze zasilania na jednej ze ścianek. Złącza sterowania służą do przyłączania kabli sterowania.
+Do pojedynczego złącza można przyłączyć wiele kabli, ale wyłącznie kabli właściwego, jednakowego typu.
+Kable mogą się rozgałęziać i krzyżować. Zajmują pola siatki i nie mogą przebiegać pod modułami. Ich prowadzenie nie zużywa materiałów.
+Kabel zasilania przesyła energię od producentów do odbiorców.
+Kabel sterowania przesyła dane od modułów sterowania do odpowiadających im podzespołów.
+Moduł dowodzenia musi być połączony ze wszystkimi sterownikami. Trasa i rozgałęzienia kabli mogą być dowolne, ale sygnał sterowania nie może przechodzić przez inne moduły.
+Każdy podzespół musi być połączony ze swoim sterownikiem, z potwierdzonym wyjątkiem generatora głównego, który nie wymaga sterownika.
+Skrzyżowanie kabli tego samego typu automatycznie łączy je w sieć.
+Mostek kablowy pozwala przeprowadzić kabel ponad innym kablem, bez połączenia ich sieci. Jest elementem prowadzenia kabli; nie znosi zakazu prowadzenia kabla pod modułem.
+Dokładne wymiary i rozmieszczenie złączy pozostają do ustalenia.
+
+3.2. Energia, HUD i priorytety
+Generatory produkują energię. Moduły odbiorcze zużywają ją aktywnie, np. podczas strzelania i przemieszczania się.
+Baterie zwiększają maksymalny zapas energii. Gdy produkcja nie pokrywa zużycia, najpierw korzystamy z zapasu baterii, zanim moduły zostaną wyłączone.
+Zielony pasek na dole HUD pokazuje aktualny zapas energii w bateriach względem maksymalnej pojemności. Żółty wskaźnik na tym pasku pokazuje bieżące zużycie energii na sekundę, również opisane liczbowo. Zapas energii i tempo jej zużycia są odrębnymi wielkościami.
+Przed odłączaniem modułów generator awaryjny próbuje pokryć niedobór. Jeśli jest kilka gotowych generatorów awaryjnych, uruchamiają się jednocześnie.
+Jeśli mimo dostępnego zapasu i zasilania awaryjnego energii nie wystarcza, moduły są odłączane kolejno, aż zapotrzebowanie będzie możliwe do pokrycia.
+Gracz ustala priorytet energii na modułach w panelu statku: 1 to najniższy, 10 najwyższy.
+Najpierw odłączany jest moduł z najniższym priorytetem. Przy jednakowym priorytecie pierwszy traci prąd moduł, który od najbliższego źródła energii dzieli największa długość kabla zasilania. Bateria również liczy się jako źródło. Odległość mierzy się trasą po kablach, a nie odległością w linii prostej.
+Jeśli przy wyborze odbiorców do odłączenia jednakowe są zarówno priorytet, jak i odległość od źródła, wyłączane są wszystkie moduły należące do tej remisującej grupy. Nie wybiera się jednego arbitralnie; reguła dotyczy rozstrzygania niedoboru, nie zwykłej pracy przy wystarczającej energii.
+Odcięte moduły wracają do pracy automatycznie po powrocie zasilania, zaczynając od najwyższego priorytetu. Nie czekają na dodatkowy zapas energii. Przy granicznym zasilaniu dopuszczalne jest częste włączanie i wyłączanie, widoczne jako miganie.
+Generatory i baterie, czyli moduły związane z energią, same jej nie zużywają. Nie dotyczy to sterownika zasilania, który jest modułem sterowania.
+Wszystkie moduły sterowania zużywają energię tylko wtedy, gdy działają odpowiadające im podzespoły.
+Dokładne wartości produkcji i zużycia energii pozostają do ustalenia.
+
+3.3. Moduły związane z energią
+- Generator główny: produkuje energię, jest dostępny od początku i nie potrzebuje sterownika. Jego działanie nie zależy od sterownika zasilania, co umożliwia produkcję prądu przy braku sterowania.
+- Bateria: zwiększa maksymalny zapas energii. Jedna jest dostępna od początku, kolejne można kupować podczas gry.
+- Generator awaryjny: automatycznie próbuje pokryć niedobór przed odłączaniem odbiorców. Produkuje energię przez krótki czas, następnie wymaga odnowienia. Kilka gotowych generatorów uruchamia się jednocześnie. Moduł wyłącznie do kupienia.
+- Generator sprzężenia zwrotnego: po trafieniu gracza wytwarza niewielką ilość energii. Działa także przy trafieniu pochłoniętym przez osłonę. Moduł wyłącznie do kupienia.
+Poza generatorem głównym pozostałe moduły energii wymagają sterownika zasilania.
+Żaden z wymienionych modułów energii nie potrzebuje energii do własnego działania; wymaganie sterowania jest osobną zależnością.
+Wartości produkcji, pojemności, czasu działania i czasu odnowienia pozostają do ustalenia.
+
+3.4. Napęd
+- Moduł silników: umożliwia przemieszczanie statku i jest dostępny od początku. Dodatkowe silniki można kupować; każdy kolejny zwiększa prędkość.
+- Moduł silników zrywu: dostępny wyłącznie do kupienia. Po naciśnięciu przycisku wykonuje krótki zryw w kierunku wybranym klawiszami ruchu. Wymaga sterownika silników.
+Zryw kosztuje energię, nie ma czasu odnowienia i nie zapewnia odporności na obrażenia. Jeśli żaden kierunek nie jest wskazany klawiszami ruchu, zryw odbywa się w kierunku kursora. Nie można rozpocząć kolejnego zrywu, dopóki bieżący się nie skończy.
+Bez działającego sterowania silnikami statek dryfuje.
+Do ustalenia pozostają parametry ruchu, koszt energii oraz przypisanie klawisza zrywu.
+
+3.5. Moduły dowodzenia i sterowania
+Dostępne od początku są: moduł dowodzenia, sterownik silników, sterownik zasilania oraz sterownik uzbrojenia.
+- Moduł dowodzenia: połączony kablami sterowania ze wszystkimi sterownikami. Utrata zasilania powoduje utratę kontroli nad statkiem, w tym sterowania bronią i osłonami. Zatrzymuje także pasywny ostrzał oraz ładowanie osłon. Jest doprecyzowaniem wcześniej opisanego centrum sterowania.
+- Moduł sterowania silnikami: obsługuje silniki zwykłe i silniki zrywu. Bez niego statek dryfuje.
+- Moduł sterowania zasilaniem: umożliwia działanie modułów energii innych niż niezależny generator główny.
+- Moduł sterowania uzbrojeniem: obsługuje uzbrojenie aktywne i pasywne.
+- Moduł sterowania osłonami: odrębny sterownik wymagany przez moduł osłon. Gracz otrzymuje go wraz z modułem osłon.
+Wszystkie moduły sterowania pobierają energię tylko podczas działania odpowiadających im podzespołów.
+
+Uzbrojenie aktywne:
+- Jest obsługiwane LPM i PPM, celuje w miejsce kursora.
+- Pojedyncze naciśnięcie wystrzeliwuje jeden pocisk, z uwzględnieniem gotowości broni.
+- Przytrzymanie utrzymuje strumień pocisków z częstotliwością wynikającą z podstawowego czasu odnowienia broni.
+- Do każdego przycisku może być przypisana tylko jedna broń naraz.
+- Bronie można przełączać wyłącznie w panelu statku otwieranym po awansie na poziom.
+
+Uzbrojenie pasywne:
+- Automatycznie strzela w miejsce kursora przez czas serii ustawiony przez gracza. Seria działa jak przytrzymanie przycisku strzału: zachowuje podstawową częstotliwość strzelania danej broni.
+- Dla serii o dodatnim czasie trwania po jej zakończeniu rozpoczyna odliczanie ustawionego przez gracza czasu odnowienia, a następnie rozpoczyna następną serię.
+- Czas serii równy zero oznacza ciągłe strzelanie, a nie brak strzałów. Nadal obowiązuje podstawowy odstęp między wystrzałami danej broni.
+- Ustawienia czasu serii i czasu odnowienia nie mają narzuconych ograniczeń.
+- Po utracie i odzyskaniu zasilania cykl zaczyna się od nowa.
+Każdą broń można ustawić jako aktywną lub pasywną. Zmian dokonuje się w panelu statku po awansie. Ustawienia serii i przerwy nie omijają podstawowego tempa strzelania broni.
+
+3.6. Uzbrojenie
+- Podstawowy blaster: dostępny od początku, zużywa mało energii i wystrzeliwuje strumień pocisków w miejsce kursora podczas przytrzymania przycisku. To podstawowe działko opisane wcześniej.
+- Podstawowa rakieta: wystrzeliwana pojedynczo, zapamiętuje miejsce kursora w chwili wystrzału. Wybucha po trafieniu przeciwnika; eksplozja rani wszystkich przeciwników w zasięgu.
+Jeśli rakieta wcześniej nie trafi przeciwnika, wybucha po dotarciu do zapamiętanego punktu kursora.
+Podstawowa rakieta jest dostępna od początku razem z blasterem, zgodnie z dodatkowym potwierdzeniem użytkownika.
+Parametry broni pozostają do ustalenia.
+
+3.7. Osłony
+Moduł osłon jest wyłącznie do kupienia i wymaga sterownika osłon, otrzymywanego wraz z tym modułem.
+Zużywa energię, aby ładować osłony. Ładowanie odbywa się zawsze, gdy osłona wymaga doładowania oraz ma działające zasilanie i sterowanie; trafienia nie powodują przerwy w ładowaniu.
+Osłony przyjmują obrażenia przed życiem. Obrażenia przekraczające pozostały poziom osłony przechodzą na punkty życia.
+Trafienie w osłonę uruchamia generator sprzężenia zwrotnego.
+Utrata zasilania dowodzenia zatrzymuje ładowanie osłon.
+Pojemność osłon, tempo ładowania i koszt energetyczny pozostają do ustalenia.
+
+3.8. Wyposażenie początkowe i zakupy
+Potwierdzony zestaw początkowy: generator główny, jedna bateria, moduł silników, moduł dowodzenia, sterownik silników, sterownik zasilania, sterownik uzbrojenia, podstawowy blaster i podstawowa rakieta.
+Dodatkowe baterie i silniki można kupować w trakcie rozgrywki.
+Wyłącznie do kupienia: generator awaryjny, generator sprzężenia zwrotnego, silniki zrywu i osłony.
+Rakieta jest wyjątkiem od zasady wyłącznego zakupu i należy do zestawu początkowego obok blastera.
+Odrębny sterownik osłon gracz otrzymuje wraz z modułem osłon.
+
+4. Grafika
+Użytkownik zaakceptował wszystkie dotychczas przygotowane grafiki, w tym bazowy arkusz oraz podpisane plansze w graphics/moduly-v02. Ich styl pixel art jest docelowym kierunkiem graficznym.
+Baza obejmuje gracza, przykładowych przeciwników, pociski, moduły i elementy interfejsu.
+Pliki graficzne znajdują się w graphics.
+Nowe podpisane plansze modułów, kabli i HUD znajdują się w graphics/moduly-v02. Zawierają 13 opisanych modułów, przykład ustawienia priorytetu, dwa rodzaje kabli i zielony pasek energii. Wymiary, rozmieszczenie detali i wyróżniony priorytet na ilustracjach nie ustalają wartości mechanicznych. Osobny sterownik osłon oraz mostek kablowy nie mają jeszcze własnych grafik; sterownik nie jest tym samym modułem co przedstawiony emiter osłon.
+Akceptacja stylu nie ustala ostatecznej listy jednostek, modułów ani ich mechanik; potwierdzone zasady są opisane w punkcie 3.
+
+5. Platforma i przebieg rozgrywki
+Gra ma działać jako aplikacja na komputer. Użytkownik nie ma preferowanego silnika; wybór technologii i obsługiwanych systemów operacyjnych pozostaje otwarty.
+Propozycja technologiczna do rozważenia: Godot 4 w wersji .NET oraz C# do logiki gry. To rekomendacja, nie zatwierdzony wybór ani rozpoczęcie implementacji. Uzasadnienie: narzędzia 2D i interfejsu do pixel artu, panelu siatki i HUD; C# do rozbudowanej logiki modułów, sieci i pocisków. Wydajność gęstego ostrzału trzeba zweryfikować pomiarami prototypu.
+Dokumentacja: https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/index.html ; https://docs.godotengine.org/en/stable/tutorials/2d/introduction_to_2d.html ; https://docs.godotengine.org/en/stable/tutorials/ui/index.html
+Rozgrywka jest nieskończona i trwa do śmierci gracza.
+Po śmierci gracz nie zachowuje nic z rozgrywki: materiałów, EXP, poziomów, zakupionych modułów ani ulepszeń. Kolejna rozgrywka zaczyna się od stanu początkowego, bez trwałego rozwoju.
+
+6. Dalsze ustalenia
+Mechanika modułów, energii i uzbrojenia oraz kolejne odpowiedzi i doprecyzowania użytkownika są ujęte w punkcie 3. Użytkownik dostarczy później dalsze szczegóły modułów, przeciwników i broni. Pytania dotyczące nieustalonych reguł znajdują się w punkcie 7.
+Do ustalenia pozostają silnik, obsługiwane systemy operacyjne, proporcje ekranu, szczegóły sterowania i możliwość zapisu trwającej rozgrywki przed śmiercią.
+Obecny etap obejmuje dokumentację i bazę grafiki. Nie ma jeszcze uruchamialnej gry.
+
+7. Pozostałe ustalenia przed implementacją
+Poprzednie pytania o tryby broni, rakiety, skrzyżowania kabli, remisy priorytetów, powrót zasilania, zryw i znaczenie wskaźników HUD zostały rozstrzygnięte w punkcie 3.
+
+Do ustalenia w kolejnych etapach:
+- Zatwierdzenie technologii, obsługiwane systemy komputerowe, proporcje ekranu i przypisania klawiszy.
+- Dokładne rozliczanie wydawanego EXP względem poziomów, progi awansu, ceny, sposób zbierania nagród i ewentualny zapis trwającej rozgrywki.
+- Wymiary siatki i modułów, rozmieszczenie portów, poziomy rozszerzające siatkę oraz szczegółowe parametry mostka kablowego i ewentualne limity długości/przepustowości kabli.
+- Wartości produkcji, pojemności i zużycia energii; parametry ruchu, uzbrojenia, osłon, ulepszeń i przeciwników.
+- Dokładne skalowanie żółtego wskaźnika zużycia energii na sekundę względem prezentacji zielonego zapasu baterii.
+
+Powyższe szczegóły nie zmieniają już potwierdzonych zasad. Nie rozpoczęto implementacji.

@@ -1,0 +1,25 @@
+SEMI_GOAL — ORBITAL / stocznia testowa
+
+Zatwierdzony zakres
+- Godot 4 .NET + C#, aplikacja na Linux x86_64.
+- Pusta arena bez przeciwników. Ruch, celowanie, blaster, rakiety, zryw, energia i osłony działają.
+- Pełnoekranowy panel statku otwierany przyciskiem oraz przypisanym klawiszem; symulacja jest wtedy zatrzymana.
+- Siatka 16 × 10; moduły można dodawać, przesuwać, obracać, usuwać i bezpłatnie ulepszać.
+- Wszystkie rodzaje modułów są dostępne bez kosztów, także w wielu egzemplarzach.
+- Edycja kabli energii i sterowania, rozgałęzienia, mostki, diagnostyka połączeń.
+- Priorytety energii 1–10, tryby LPM/PPM/pasywny, ustawianie czasu serii i przerw.
+- Domyślne sterowanie: WASD, Spacja, LPM/PPM, Tab, Esc. Zmiana przypisań klawiatury i myszy, zapis ustawień między uruchomieniami.
+- Narzędzia testowe: obrażenia, energia, naprawa, konfiguracja początkowa.
+- Każde uruchomienie zaczyna od zestawu początkowego; konfiguracja statku nie jest zapisywana.
+- Rozmiary modułów, moc, koszty i pozostałe liczby są roboczym balansem.
+- Zachowujemy wcześniejsze grafiki i muzykę. Wersja testowa używa istniejących zasobów.
+
+Realizacja
+[ ] Fundament projektu i niezależny model symulacji.
+[ ] Edytor statku, sieci kabli i diagnostyka.
+[ ] Arena, broń, napęd, energia i osłony.
+[ ] Zapis ustawień sterowania i narzędzia testowe.
+[ ] Testy mechanik, uruchomienie Godota, weryfikacja wizualna i pakiet Linux.
+
+Git: regularne commity spójnych etapów. Brak publikowania repozytorium.
+Przeciwnicy, levelowanie, ekonomia i końcowy balans są poza tym etapem.

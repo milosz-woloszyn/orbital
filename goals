@@ -1,0 +1,64 @@
+CELE PROJEKTU
+
+Cel główny
+Stworzyć kosmiczną grę bullet hell jako aplikację na komputer, łączącą ręczne celowanie i unikanie gęstego ostrzału z rozwojem oraz konfiguracją modułowego statku. Rozgrywka trwa bez końca aż do śmierci, po której cały postęp przepada.
+
+Etap 0 — przygotowanie
+[x] Zapisać potwierdzone założenia oraz odpowiedzi użytkownika dotyczące modułów w assumptions.
+[x] Przygotować bazowy arkusz sprite'ów oraz podpisane plansze modułów, kabli i HUD.
+[x] Uzgodnić grafikę: użytkownik zaakceptował wszystkie dotychczasowe plansze i styl pixel art.
+[x] Ustalić formę gry: aplikacja na komputer.
+[x] Ustalić sterowanie: klawiatura i mysz, ręczne celowanie, ruch po całym ekranie, LPM/PPM.
+[x] Ustalić pauzę po awansie, wydawanie EXP kosztem postępu poziomu i utratę całego postępu po śmierci.
+[x] Ustalić główne zasady energii, priorytetów, kabli, sterowników, napędu, broni i osłon.
+[ ] Zatwierdzić silnik, język i obsługiwane systemy operacyjne; propozycja do rozważenia: Godot 4 .NET + C#, bez podjętej jeszcze decyzji.
+[x] Doprecyzować tryby broni, detonację rakiet, mostki kablowe, remisy priorytetów, powrót zasilania, zryw i znaczenie wskaźników energii.
+[ ] Doprecyzować rozliczanie EXP oraz pozostałe parametry wymienione w assumptions.
+
+Etap 1 — prototyp walki
+[ ] Statek startujący w dolnej części ekranu, ruch po całym ekranie, klawiatura i mysz oraz ręczne celowanie.
+[ ] Blaster: pojedynczy pocisk po naciśnięciu i powtarzany ostrzał podczas przytrzymania, zgodnie z podstawowym czasem odnowienia.
+[ ] Przeciwnicy nadciągający spoza mapy i różne zachowania.
+[ ] Wzory ostrzału, kolizje i obrażenia.
+[ ] Nieskończona rozgrywka do śmierci; restart bez zachowania materiałów, EXP, poziomów, zakupionych modułów i ulepszeń.
+[ ] Nagrody: materiały i EXP.
+
+Etap 2 — panel i konfiguracja statku
+[ ] Awans automatycznie otwiera panel zarządzania i sklep oraz zatrzymuje walkę; zamknięcie wznawia rozgrywkę.
+[ ] Kwadratowa siatka z modułami różnych rozmiarów, obracaniem i możliwością przyszłego powiększania po wybranych awansach.
+[ ] Rozmieszczenie modułów niezależne od wyglądu statku; brak oddzielnego trafiania w moduły.
+[ ] Kable zasilania i sterowania: rozgałęzienia, skrzyżowania, wiele kabli właściwego typu w złączu, zajmowanie pól siatki, brak tras pod modułami i brak kosztu materiałowego.
+[ ] Automatyczne połączenia na skrzyżowaniach kabli tego samego typu; mostki umożliwiające przejście nad innym kablem bez połączenia.
+[ ] Dowodzenie połączone z każdym sterownikiem; sygnał nie przechodzi przez inne moduły. Podzespoły połączone z właściwymi sterownikami, z wyjątkiem niezależnego generatora głównego.
+[ ] Potwierdzony zestaw początkowy: generator główny, jedna bateria, silniki, dowodzenie, sterowanie silnikami, zasilaniem i uzbrojeniem, blaster oraz rakieta.
+[ ] Zakup modułów za materiały i ulepszenia za EXP zmniejszający postęp poziomu.
+[ ] Przypisanie najwyżej jednej broni do LPM i jednej do PPM; przełączanie broni tylko w panelu po awansie.
+
+Etap 3 — energia i zależności modułów
+[ ] Produkcja energii, aktywne zużycie i zapas zwiększany bateriami; wykorzystanie zapasu przed wyłączaniem modułów.
+[ ] Zielony pasek zapasu baterii na dole HUD oraz żółty wskaźnik bieżącego zużycia energii na sekundę z wartością liczbową.
+[ ] Priorytety ustawiane przez gracza w zakresie 1–10; kolejne odłączenia od najniższego aż do pokrycia zapotrzebowania.
+[ ] Przy równym priorytecie odłączanie najpierw modułu z najdłuższą trasą kabla do najbliższego źródła, wliczając baterie; przy pełnym remisie odłączenie całej remisującej grupy.
+[ ] Automatyczny powrót zasilania od najwyższych priorytetów bez oczekiwania na dodatkowy zapas; dopuszczalne miganie przy granicznym zasilaniu.
+[ ] Generatory awaryjne próbują pokryć niedobór przed odłączeniami; gotowe egzemplarze włączają się jednocześnie, działają krótko i wymagają odnowienia.
+[ ] Generator sprzężenia zwrotnego daje energię po trafieniu statku, również w osłonę.
+[ ] Moduły energii bez własnego zużycia prądu; główny generator niezależny od sterowania, pozostałe wymagają sterownika zasilania.
+[ ] Sterowniki zużywają energię tylko podczas działania podzespołów; utrata dowodzenia blokuje sterowanie, pasywny ostrzał i ładowanie osłon.
+
+Etap 4 — rozwinięcie napędu i walki
+[ ] Dodatkowe silniki zwiększające prędkość, dryf bez sterowania silnikami.
+[ ] Zryw w kierunku wskazanym klawiszami, a przy braku kierunku w stronę kursora; obsługiwany przez sterownik silników, za energię, bez odnowienia i bez odporności na obrażenia; brak możliwości rozpoczęcia kolejnego przed końcem bieżącego.
+[ ] Każda broń może działać aktywnie lub pasywnie. Pasywna seria działa jak przytrzymanie przycisku i respektuje podstawowe tempo strzałów; czas serii zero oznacza ciągły ostrzał.
+[ ] Pasywne serie celowane w kursor: czas serii i przerwy ustawiane bez narzuconych ograniczeń, przerwa liczona od końca skończonej serii, restart cyklu po odzyskaniu zasilania.
+[ ] Rakieta zapamiętująca punkt kursora przy wystrzale, detonacja po trafieniu przeciwnika lub po dotarciu do celu i obrażenia dla wszystkich przeciwników w zasięgu.
+[ ] Osobny sterownik otrzymywany wraz z modułem osłon; ładowanie osłon za energię również podczas otrzymywania obrażeń, osłony przed życiem, nadmiar obrażeń przechodzi na życie.
+[ ] Generator awaryjny, generator sprzężenia zwrotnego, silniki zrywu i osłony dostępne wyłącznie przez zakup.
+[ ] Dalsze szczegóły modułów, broni i przeciwników według danych użytkownika.
+
+Etap 5 — przygotowanie gry
+[ ] Dopasować zaakceptowane grafiki do wybranego silnika i docelowych rozmiarów modułów.
+[ ] Przy przyszłym uzupełnianiu zasobów przygotować grafikę osobnego sterownika osłon i mostka kablowego.
+[ ] Ustalić parametry i balans, czytelność pocisków oraz wydajność przy dużej liczbie obiektów.
+[ ] Przygotować uruchamialną aplikację na uzgodnione systemy komputerowe.
+
+Kolejność jest propozycją realizacji. Zaznaczone ustalenia oznaczają decyzje projektowe lub istniejące zasoby, nie gotowe mechaniki. Otwarte szczegóły pozostają opisane w assumptions. Obecna aktualizacja obejmuje tylko dokumentację.

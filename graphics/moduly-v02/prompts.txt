@@ -1,0 +1,43 @@
+Wygenerowano wbudowanym narzędziem image_gen na podstawie wcześniejszego stylu.
+Podpisane plansze koncepcyjne; wymiary ilustracji nie określają liczby pól zajmowanych przez moduły. Kolory złączy oraz wyróżniony priorytet 7 są propozycją wizualną, nie zatwierdzonym ustawieniem domyślnym. Podpisy są częścią obrazu; plansze wymagają dalszego przygotowania do użycia jako sprite'y w silniku.
+
+PLANSZA 1
+Use case: stylized-concept
+Asset type: labeled pixel-art game asset reference board, energy and propulsion modules.
+Input image role: STYLE REFERENCE ONLY. Use the attached existing sprite atlas to match its chunky top-down pixel art, steel-gray mechanical housings, dark outlines, cyan illuminated reactor details and orange engine fire. Create a NEW board, do not reproduce the ships or projectiles.
+Primary request: SIX clearly separated module sprites, arranged in a clean 3-column by 2-row layout on a genuinely transparent background, landscape 1536x1024. Every sprite has its own accurately spelled Polish caption below it, with generous separation. Small dark caption plates allowed for readability. The caption belongs to the sprite, never overlaps it. Crisp hard-edged pixel clusters, no vector styling, no smooth 3D, no blurred glow.
+Each module has exactly ONE clearly visible amber power socket on ONE exterior edge of its housing. Controllers and cable routes are not shown here. Bodies have varied rectangular footprints, suitable for placing on a square inventory grid. Do not print dimensions, prices or invented stats.
+Top row left: main generator, recognizable circular cyan reactor inside a bulky square steel housing, caption "GENERATOR GŁÓWNY".
+Top row middle: battery, compact tall rectangular container with several luminous green energy cells, caption "BATERIA".
+Top row right: emergency generator, compact orange-lit backup reactor with hazard stripe and a small timer-symbol panel, caption "GENERATOR AWARYJNY".
+Bottom row left: feedback generator, steel housing with a cyan coil and an impact-absorption plate, visually different from main reactor, caption split across TWO lines "GENERATOR SPRZĘŻENIA" / "ZWROTNEGO".
+Bottom row middle: normal engine, elongated twin mechanical nozzles with orange exhaust matching the previous sheet, caption "SILNIKI".
+Bottom row right: dash engine, short wide turbine with intense short cyan exhaust and heavy couplings, caption "SILNIKI ZRYWU".
+Keep all six illustrations fully inside their cells with ample transparent margins, no scene background, no extra objects, no watermarks. Labels in clear legible block lettering with correct Polish accents. This is a concept asset board, not a screenshot.
+
+PLANSZA 2
+Use case: stylized-concept
+Asset type: labeled pixel-art reference board for spaceship control, weapon and shield modules.
+Input images are STYLE REFERENCES ONLY: image 1 is the original game sprite atlas; image 2 is the new energy and propulsion module board. Match their chunky steel-gray top-down pixel art, dark outlines, bolts, cyan illumination, readable Polish nameplates. Create a NEW board with different components below.
+Landscape 2048x1024. Strict 4-column by 2-row layout. Eight entries, generous spacing, full objects and all captions within frame, caption below its own object. Dark navy presentation background. Hard pixel edges, limited colors, not smooth vector or 3D. Each actual module has exactly one amber power socket on one exterior side, plus recognizable cyan data connectors. Vary rectangular module footprints. No stats or printed dimensions.
+Top row:
+1. Command module: sturdy square steel console with a central cyan tactical map screen, distinct from a weapon turret. Caption "MODUŁ DOWODZENIA".
+2. Engine controller: compact horizontal steel console with twin thruster icons and navigation arrow indicators. Caption on two lines "STEROWANIE" / "SILNIKAMI".
+3. Power controller: tall steel control panel with green energy graph and lightning icon. Caption "STEROWANIE" / "ZASILANIEM".
+4. Weapon controller: steel targeting console with cyan crosshair display and two tiny mouse-button symbols, NO gun barrel. Caption "STEROWANIE" / "UZBROJENIEM".
+Bottom row:
+1. Basic blaster: a single simple gun turret module with cyan-lit barrel, in the same steel style as original cannon. Caption "PODSTAWOWY BLASTER".
+2. Basic missile launcher: rectangular module containing one recognizable orange-tipped missile in a launch rail. Caption "PODSTAWOWA RAKIETA".
+3. Shield module: round cyan protective field emitter with mechanical base and shield icon. Caption "MODUŁ OSŁON".
+4. Priority widget, a UI element rather than a module: steel rectangular panel with ten small ordered slots visibly numbered 1 2 3 4 5 6 7 8 9 10, slot 7 highlighted amber. Under 1 show "MIN", under 10 show "MAX". Caption "PRIORYTET ENERGII".
+Keep captions legible, exact Polish text with accents, don't merge or duplicate entries. No watermark. Design board only, not a screenshot.
+
+PLANSZA 3
+Use case: ui-mockup
+Asset type: labeled pixel-art connection assets and energy HUD concept board for a spaceship bullet hell game.
+Input images are STYLE REFERENCES ONLY. Match their hard chunky pixel edges, steel housings, dark navy background, cyan and amber illuminated mechanics and bold Polish captions.
+Create a new clean landscape reference board, 1536x1024. Two equally sized labeled cable examples in the top half, one wide labeled energy HUD example across the bottom. Entire artwork within frame with ample padding. Not a game screenshot; no ships or extra modules.
+Upper left: thick amber/orange power cable, right-angle shape, mechanical rectangular plugs at both ends, one matching amber power socket detail alongside it. Polish caption "KABEL ZASILANIA".
+Upper right: thinner cyan/blue data/control cable, right-angle shape with distinct small twin-contact plugs and a matching cyan control socket detail alongside it. Polish caption "KABEL STEROWANIA".
+Bottom: a long horizontal ENERGY HUD BAR designed for the bottom of the game screen. Steel pixel border, dark empty capacity behind vivid GREEN segmented fill, with a distinctly visible narrow amber usage indicator ON THE SAME BAR. Label above the widget "HUD ENERGII". Under the bar, two short clear callouts: "DOSTĘPNA ENERGIA" pointing to the green filled extent, and "AKTUALNE ZUŻYCIE" pointing to the amber indicator. Keep this purely conceptual: NO numbers, NO units, NO invented rates. Green is the main bar color, amber is only the demand marker. Captions must be accurate, easily legible Polish with accents. No labels overlap assets.
+Avoid smooth vector art, photorealism, 3D perspective, motion blur, watermark or extraneous charts. All textures and letterforms follow the pixel-art reference style.

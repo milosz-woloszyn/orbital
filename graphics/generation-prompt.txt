@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: initial pixel-art sprite atlas for a top-down space bullet hell game.
+Create a single clean square transparent PNG sprite sheet, 1024x1024, with a strict invisible 4 by 4 grid of 256x256 cells. Each asset centered in its cell, contained within 192x192 pixels, empty transparent gutters. Crisp deliberately chunky pixel art, hard edges, no antialiasing, no gradients, no soft glow, no text or labels, no watermark. Consistent small game sprite scale, top-down orthographic view.
+Row 1: cell 1 small player spaceship pointing up with one basic central cannon; cell 2 small enemy interceptor pointing down; cell 3 wide enemy ship pointing down; cell 4 heavier enemy ship pointing down. Player light steel with cyan cockpit; enemies dark steel with orange/red accents and visibly different silhouettes.
+Row 2: cell 1 single narrow cyan player bullet pointing up; cell 2 single round orange enemy bullet; cell 3 single magenta diamond enemy bullet; cell 4 single metal scrap pickup.
+Row 3: cell 1 square reactor/generator module icon; cell 2 square command center module icon; cell 3 engine module icon; cell 4 weapon control module icon.
+Row 4: cell 1 basic cannon module icon; cell 2 empty dark navy ship-management grid slot with steel pixel border; cell 3 matching slot containing a bright elbow cable with visible endpoints; cell 4 compact HUD widget with three horizontal bars representing hull, experience and materials, no letters or numbers.
+The UI and module interiors are opaque, the area around all sprites is true alpha transparency. These are provisional visual examples, not a final roster. No decorative backgrounds, no grid lines outside assets, no perspective.

@@ -1,0 +1,11 @@
+.godot/
+.tools/
+**/bin/
+**/obj/
+build/
+artifacts/
+.DS_Store
+*.user
+.agents/
+.aws/
+.codex/
