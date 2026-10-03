@@ -22,10 +22,10 @@ EXP i materiały są przyznawane automatycznie po zabiciu przeciwnika; nie wymag
 HUD pokazuje pasek postępu do kolejnego poziomu oraz licznik posiadanych materiałów/kasy, obok dotychczasowych wskaźników statku.
 Po każdym awansie automatycznie otwiera się panel zarządzania statkiem ze sklepem, a walka zostaje zatrzymana na czas korzystania z panelu.
 Sklep na każdy awans losuje nowy zestaw maksymalnie trzech ofert z puli modułów. Każda oferta pozwala kupić jeden egzemplarz za materiały. Można kupić wszystkie trzy oferty, jeśli wystarczy środków. Losowanie dopuszcza powtórki oraz moduły już posiadane przez gracza.
-Po każdym awansie gracz może ulepszyć jeden moduł. Niewykorzystana możliwość ulepszenia przepada przy zamknięciu panelu i nie przechodzi na kolejny awans.
+Po każdym awansie gracz może bezpłatnie ulepszyć jeden moduł. Niewykorzystana możliwość ulepszenia przepada przy zamknięciu panelu i nie przechodzi na kolejny awans.
 Próba zamknięcia panelu z niewykorzystanym ulepszeniem wymaga dodatkowego potwierdzenia utraty tej możliwości. Anulowanie potwierdzenia pozostawia panel otwarty; potwierdzone zamknięcie wznawia walkę.
-Koszt tego jednego ulepszenia wymaga jeszcze potwierdzenia: wcześniejsze założenie przewidywało wydatek EXP zmniejszający postęp poziomu, natomiast najnowsza odpowiedź ustala limit jednego ulepszenia i jego przepadanie, ale nie rozstrzyga, czy ulepszenie jest darmowe. Nie przyjmujemy nowego kosztu ani darmowości jako potwierdzonej reguły.
-Progi poziomów, ceny, wartości nagród, efekty ulepszeń i szczegółowy balans pozostają robocze. Jeśli utrzymany zostanie koszt EXP, należy doprecyzować rozliczanie go po awansie, możliwość obniżenia poziomu i ponownego osiągania tego samego progu.
+Ulepszenie po awansie nie kosztuje EXP ani materiałów i nie zmniejsza postępu poziomu. Ta potwierdzona reguła zastępuje wcześniejsze założenie o wydawaniu EXP na ulepszenia.
+Progi poziomów, ceny, wartości nagród, efekty ulepszeń i szczegółowy balans pozostają robocze.
 
 3. Budowa statku i mechanika modułów
 3.1. Siatka, złącza i kable
@@ -152,7 +152,7 @@ Poprzednie pytania o tryby broni, rakiety, skrzyżowania kabli, remisy priorytet
 
 Do ustalenia w kolejnych etapach:
 - Ewentualne dalsze platformy i docelowe warianty interfejsu poza zatwierdzonym prototypem Linux.
-- Koszt jednego ulepszenia po awansie (darmowe czy za EXP); jeśli pozostanie koszt EXP, jego dokładne rozliczanie względem poziomów. Progi awansu, ceny, nagrody i ewentualny zapis trwającej rozgrywki.
+- Progi awansu, ceny modułów, wartości nagród i ewentualny zapis trwającej rozgrywki.
 - Docelowe wymiary modułów, rozmieszczenie portów oraz szczegółowe parametry mostka i ewentualne limity długości/przepustowości kabli. Początkowa siatka ma 18 × 12 pól. Przyrost +2 kolumny i +2 wiersze co 5 poziomów jest ustalony.
 - Wartości produkcji, pojemności i zużycia energii; parametry ruchu, uzbrojenia, osłon, ulepszeń i przeciwników.
 - Zachowanie pocisku samonaprowadzającego, gdy brak celu, oraz szczegółowy balans pięciu typów przeciwników i pięciu dodatkowych broni.

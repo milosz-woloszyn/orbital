@@ -10,12 +10,13 @@ Etap 0 — przygotowanie
 [x] Ustalić formę gry: aplikacja na komputer.
 [x] Ustalić sterowanie: klawiatura i mysz, ręczne celowanie, ruch po całym ekranie, LPM/PPM.
 [x] Ustalić pauzę po awansie i utratę całego postępu po śmierci.
-[x] Ustalić automatyczne nagrody, trzy losowe oferty sklepu i jedno ulepszenie na awans, przepadające po zamknięciu panelu z potwierdzeniem.
+[x] Ustalić automatyczne nagrody, trzy losowe oferty sklepu i jedno darmowe ulepszenie na awans, przepadające po zamknięciu panelu z potwierdzeniem.
 [x] Ustalić pięć typów przeciwników, ciągły wzrost trudności, pięć dodatkowych broni i rozrost siatki co 5 poziomów.
 [x] Ustalić główne zasady energii, priorytetów, kabli, sterowników, napędu, broni i osłon.
 [x] Zatwierdzić technologię prototypu: Godot 4 .NET + C#, Linux x86_64.
 [x] Doprecyzować tryby broni, detonację rakiet, mostki kablowe, remisy priorytetów, powrót zasilania, zryw i znaczenie wskaźników energii.
-[ ] Potwierdzić koszt jednego ulepszenia na awans: darmowe czy za EXP; w drugim przypadku doprecyzować rozliczanie EXP. Pozostałe parametry są wymienione w assumptions.
+[x] Potwierdzić jedno darmowe ulepszenie na awans, bez kosztu EXP i materiałów oraz bez zmniejszania postępu poziomu.
+[ ] Doprecyzować pozostałe parametry wymienione w assumptions.
 
 Etap 1 — prototyp walki
 [ ] Statek startujący w dolnej części ekranu, ruch po całym ekranie, klawiatura i mysz oraz ręczne celowanie.
@@ -41,7 +42,7 @@ Etap 2 — panel i konfiguracja statku
 [ ] Dowodzenie połączone z każdym sterownikiem; sygnał nie przechodzi przez inne moduły. Podzespoły połączone z właściwymi sterownikami, z wyjątkiem niezależnego generatora głównego.
 [ ] Potwierdzony zestaw początkowy: generator główny, jedna bateria, silniki, dowodzenie, sterowanie silnikami, zasilaniem i uzbrojeniem, blaster oraz rakieta.
 [ ] Sklep na każdy awans losuje maksymalnie 3 nowe oferty z puli modułów, po jednym egzemplarzu na ofertę; powtórki i posiadane moduły są dozwolone, można kupić wszystkie oferty za materiały.
-[ ] Jedno ulepszenie modułu na awans; niewykorzystane przepada po zamknięciu panelu. Koszt według przyszłego potwierdzenia w assumptions.
+[ ] Jedno darmowe ulepszenie modułu na awans, bez wydawania EXP lub materiałów i bez zmniejszania postępu poziomu; niewykorzystane przepada po zamknięciu panelu.
 [ ] Dodatkowe potwierdzenie zamknięcia panelu przy niewykorzystanym ulepszeniu; anulowanie zachowuje otwarty panel i możliwość ulepszenia.
 [ ] Przypisanie najwyżej jednej broni do LPM i jednej do PPM; przełączanie broni tylko w panelu po awansie.
 
