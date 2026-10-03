@@ -14,7 +14,8 @@ public sealed class Bindings
         ("primary", "Broń — kanał LPM", Key.None, MouseButton.Left),
         ("secondary", "Broń — kanał PPM", Key.None, MouseButton.Right),
         ("ship", "Panel statku", Key.Tab, MouseButton.None),
-        ("menu", "Menu / pauza", Key.Escape, MouseButton.None)
+        ("menu", "Menu / pauza", Key.Escape, MouseButton.None),
+        ("pickup", "Podnieś moduł w stoczni", Key.Q, MouseButton.None)
     ];
     public float MusicVolume { get; set; } = .28f;
     public float EffectsVolume { get; set; } = .5f;
@@ -56,11 +57,18 @@ public sealed class Bindings
             _=>null
         };
         if(clean==null) return false;
+        if(clean is InputEventKey key && (key.PhysicalKeycode==Key.F11 ||
+            id=="pickup" && (key.PhysicalKeycode is Key.R or Key.Delete or Key.Escape || key.PhysicalKeycode>=Key.Key1 && key.PhysicalKeycode<=Key.Key5)) ||
+            id=="pickup" && clean is InputEventMouseButton { ButtonIndex:MouseButton.Left or MouseButton.Right })
+        { message="Ten przycisk jest zarezerwowany przez interfejs.";return false; }
         foreach(var (other,title,_,_) in Defaults)
-            if(other!=id && Same(InputMap.ActionGetEvents(other)[0],clean))
+            if(other!=id && SharesContext(id,other) && Same(InputMap.ActionGetEvents(other)[0],clean))
             { message=$"To przypisanie jest zajęte: {title}. Zmień je najpierw."; return false; }
         Assign(id,clean); Save(); message=SaveError.Length>0?SaveError:"Przypisanie zapisane."; return true;
     }
+    // Flight and pickup never run together, so existing flight bindings (including Q) remain valid.
+    private static bool SharesContext(string a,string b)=>
+        a!="pickup" && b!="pickup" || a is "ship" or "menu" || b is "ship" or "menu";
     private static bool Same(InputEvent a,InputEvent b) => (a,b) switch
     {
         (InputEventKey x,InputEventKey y)=>x.PhysicalKeycode==y.PhysicalKeycode,
@@ -70,15 +78,27 @@ public sealed class Bindings
     private void Load()
     {
         var file=new ConfigFile(); if(file.Load("user://settings.cfg")!=Error.Ok) return;
-        var loaded=new List<InputEvent>();
+        var loaded=new List<(string Id,InputEvent Event)>();
         foreach(var (id,_,_,_) in Defaults)
         {
             var value=file.GetValue("controls",id,"").AsString();
+            if(value.Length==0)
+            {
+                // Keep old preferences; choose an unused shortcut only for the newly added action.
+                if(id=="pickup")
+                    foreach(var fallback in new[] { Key.Q,Key.E,Key.T })
+                    {
+                        var candidate=new InputEventKey { PhysicalKeycode=fallback };
+                        if(Defaults.Any(d=>d.Id!=id && SharesContext(id,d.Id) && Same(InputMap.ActionGetEvents(d.Id)[0],candidate)))continue;
+                        Assign(id,candidate);break;
+                    }
+                continue;
+            }
             var parts=value.Split(':');
             if(parts.Length!=2 || !long.TryParse(parts[1],out var code) || code<=0) { Reset(false); return; }
             InputEvent ev=parts[0]=="mouse" ? new InputEventMouseButton { ButtonIndex=(MouseButton)code } : new InputEventKey { PhysicalKeycode=(Key)code };
-            if(loaded.Any(x=>Same(x,ev))) { Reset(false); return; }
-            loaded.Add(ev); Assign(id,ev);
+            if(loaded.Any(x=>SharesContext(id,x.Id) && Same(x.Event,ev))) { Reset(false); return; }
+            loaded.Add((id,ev)); Assign(id,ev);
         }
         MusicVolume=Math.Clamp((float)file.GetValue("audio","music",.28f),0,1);
         EffectsVolume=Math.Clamp((float)file.GetValue("audio","effects",.5f),0,1);

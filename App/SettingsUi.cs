@@ -11,14 +11,14 @@ public partial class Main
     {
         _settingsView=Screen();
         Header(_settingsView,"ORBITAL  /  USTAWIENIA","Dopasuj swój kokpit","Przypisania i głośność są zapamiętywane. Układ statku startuje od nowa.");
-        Style.Button(_settingsView,"Wróć",1264,35,152,46,()=>{ _capture=null;ShowView(_previousView); },true);
+        Style.Right(Style.Button(_settingsView,"Wróć",1288,35,152,46,()=>{ _capture=null;ShowView(_previousView); },true));
         Style.PanelAt(_settingsView,24,136,842,718);
         Style.Label(_settingsView,"STEROWANIE",48,155,540,30,14,Style.Cyan,true);
         Style.Label(_settingsView,"AKCJA",48,205,400,23,11,Style.Muted,true);
         Style.Label(_settingsView,"PRZYPISANIE",546,205,270,23,11,Style.Muted,true);
         for(int i=0;i<Bindings.Defaults.Length;i++)
         {
-            var entry=Bindings.Defaults[i];int row=245+i*51;
+            var entry=Bindings.Defaults[i];int row=245+i*44;
             Style.Label(_settingsView,$"{i+1:00}",48,row+8,42,25,13,Style.Muted,true);
             Style.Label(_settingsView,entry.Name,105,row+5,410,30,17);
             _bindingButtons[entry.Id]=Style.Button(_settingsView,Controls.Name(entry.Id),546,row,294,40,()=>
@@ -50,6 +50,14 @@ public partial class Main
         Style.Label(_settingsView,"Swobodnie sprawdzaj konfiguracje.\nModuły i ulepszenia nic nie kosztują.\nPrzeciwnicy pojawią się w kolejnym etapie.",914,595,476,86,17,Style.Muted);
         Style.Label(_settingsView,"F11  pełny ekran\nEsc  anuluje oczekiwanie na przypisanie",914,704,478,47,13,Style.Muted,true);
         Style.Button(_settingsView,"Zakończ grę",914,789,477,43,()=>QuitCleanly());
+        foreach(var child in _settingsView.GetChildren().OfType<Control>().Where(c=>c.Position.Y>=136))
+        {
+            if(child.Position.X>=890) { child.Position+=new Vector2(24,0);Style.Right(child); }
+            else if(child is Panel) { child.Position-=new Vector2(24,0);child.Size+=new Vector2(24,0);Style.StretchRight(child); }
+            else if(child.Position.X>=546)Style.Right(child);
+            else child.Position-=new Vector2(24,0);
+            if(child is Panel && child.Position.Y+child.Size.Y>=854) { child.OffsetBottom+=24;Style.StretchBottom(child); }
+        }
     }
     private void ShowSettings()
     { _previousView=_view;_capture=null;UpdateBindingButtons();ShowView("settings"); }

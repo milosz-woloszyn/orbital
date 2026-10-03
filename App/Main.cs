@@ -32,7 +32,10 @@ public partial class Main : Control
         _audio=new Sound(this,Controls);
         ResetShip(false);
         BuildArena();BuildEditor();BuildSettings();
-        _toast=Style.Label(this,"",28,875,1380,22,12,Style.Amber,true);
+        foreach(var screen in new[] { _arenaView,_editorView,_settingsView })
+            screen.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _toast=Style.Label(this,"",16,Size.Y-22,Size.X-32,22,12,Style.Amber,true);
+        Style.Bottom(Style.StretchRight(_toast));
         ShowView("arena");
         if(_smoke) CallDeferred(nameof(StartSmoke));
     }
@@ -67,44 +70,48 @@ public partial class Main : Control
             Tick=(dt,intent)=>Simulation.Step(dt,intent),Paused=()=>IsPaused,
             Dead=()=>Simulation.IsDestroyed,Shield=()=>(float)Simulation.Shield,Audio=_audio
         };
-        _arenaView.AddChild(Flight);
-        Header(_arenaView,"ORBITAL  /  LABORATORIUM 01","Swobodny lot","Sprawdź swój statek. Zmieniaj układ. Wracaj na orbitę.");
-        Style.Button(_arenaView,"Ustawienia",1112,35,140,46,()=>ShowSettings());
-        Style.Button(_arenaView,"Statek  ↗",1264,35,152,46,()=>ShowView("editor"),true);
-        Style.PanelAt(_arenaView,1112,116,304,570);
-        Style.Label(_arenaView,"KONSOLA TESTOWA",1132,136,260,26,13,Style.Cyan,true);
-        Style.Label(_arenaView,"Twoje laboratorium",1132,171,260,30,23);
-        Style.Label(_arenaView,"Bez przeciwników i kosztów.\nWszystkie moduły w stoczni.",1132,212,263,54,15,Style.Muted);
-        Style.Button(_arenaView,"Zadaj obrażenia  −25",1132,293,264,44,TestDamage);
-        Style.Button(_arenaView,"Uzupełnij energię",1132,349,264,44,()=>{ Simulation.Refill();Toast("Baterie naładowane."); });
-        Style.Button(_arenaView,"Opróżnij baterie",1132,405,264,44,()=>{ Simulation.SetEnergy(0);Toast("Baterie rozładowane — obserwuj zasilanie."); });
-        Style.Button(_arenaView,"Napraw kadłub",1132,461,264,44,()=>{ Simulation.Repair();Toast("Kadłub naprawiony."); });
-        Style.Button(_arenaView,"Przywróć zestaw startowy",1132,529,264,44,()=>ResetShip());
-        _flightStatus=Style.Label(_arenaView,"",1132,602,264,61,13,Style.Muted,true);
+        _arenaView.AddChild(Flight);Flight.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        Header(_arenaView,"ORBITAL  /  LABORATORIUM 01","Swobodny lot","");
+        Style.Right(Style.Button(_arenaView,"Ustawienia",1136,24,140,46,ShowSettings));
+        Style.Right(Style.Button(_arenaView,"Statek  ↗",1288,24,152,46,()=>ShowView("editor"),true));
+        var console=Style.Right(Style.StretchBottom(Style.Group(_arenaView,1136,96,304,630)));
+        var consoleBack=Style.PanelAt(console,0,0,304,630);Style.StretchBottom(consoleBack);
+        Style.Label(console,"KONSOLA TESTOWA",20,20,260,26,13,Style.Cyan,true);
+        Style.Label(console,"Twoje laboratorium",20,55,260,30,23);
+        Style.Label(console,"Bez przeciwników i kosztów.\nWszystkie moduły w stoczni.",20,96,263,54,15,Style.Muted);
+        Style.Button(console,"Zadaj obrażenia  −25",20,177,264,44,TestDamage);
+        Style.Button(console,"Uzupełnij energię",20,233,264,44,()=>{ Simulation.Refill();Toast("Baterie naładowane."); });
+        Style.Button(console,"Opróżnij baterie",20,289,264,44,()=>{ Simulation.SetEnergy(0);Toast("Baterie rozładowane — obserwuj zasilanie."); });
+        Style.Button(console,"Napraw kadłub",20,345,264,44,()=>{ Simulation.Repair();Toast("Kadłub naprawiony."); });
+        Style.Button(console,"Przywróć zestaw startowy",20,413,264,44,()=>ResetShip());
+        _flightStatus=Style.Label(console,"",20,486,264,61,13,Style.Muted,true);
 
-        Style.PanelAt(_arenaView,24,706,650,148);
-        Style.Label(_arenaView,"ZASILANIE",44,721,200,24,12,Style.Muted,true);
-        _energy=Style.Label(_arenaView,"",44,748,400,34,27,Style.Green);
-        _generation=Style.Label(_arenaView,"",385,743,267,48,13,Style.Muted,true);
-        _energyBar=Style.Rect(new Meter { Tint=Style.Green },44,805,610,25);_arenaView.AddChild(_energyBar);
+        var hud=Style.Bottom(Style.StretchRight(Style.Group(_arenaView,0,738,1440,122)));
+        var power=Style.StretchRight(Style.Group(hud,0,0,666,122));
+        Style.StretchRight(Style.PanelAt(power,0,0,666,122));
+        Style.Label(power,"ZASILANIE",20,12,200,24,12,Style.Muted,true);
+        _energy=Style.Label(power,"",20,39,360,34,27,Style.Green);
+        _generation=Style.Right(Style.Label(power,"",379,34,267,48,13,Style.Muted,true));
+        _energyBar=Style.Rect(new Meter { Tint=Style.Green },20,92,626,20);power.AddChild(_energyBar);Style.StretchRight(_energyBar);
 
-        Style.PanelAt(_arenaView,690,706,215,148);
-        Style.Label(_arenaView,"KADŁUB",710,721,175,22,12,Style.Muted,true);
-        _hull=Style.Label(_arenaView,"",710,759,175,30,24);
-        _hullBar=Style.Rect(new Meter { Tint=Style.Red },710,811,175,10);_arenaView.AddChild(_hullBar);
-        Style.PanelAt(_arenaView,921,706,215,148);
-        Style.Label(_arenaView,"OSŁONA",941,721,175,22,12,Style.Muted,true);
-        _shield=Style.Label(_arenaView,"",941,759,175,30,24);
-        _shieldBar=Style.Rect(new Meter { Tint=Style.Cyan },941,811,175,10);_arenaView.AddChild(_shieldBar);
-        Style.PanelAt(_arenaView,1152,706,264,148);
-        Style.Label(_arenaView,"NAPĘD / PRĘDKOŚĆ",1172,721,226,22,12,Style.Muted,true);
-        _speed=Style.Label(_arenaView,"",1172,758,226,32,24);
-        Style.Label(_arenaView,"Środek statku = punkt trafienia",1172,809,225,25,11,Style.Muted);
-        _bindingsHint=Style.Label(_arenaView,"",26,857,1360,20,11,Style.Muted,true);
+        var hull=Style.Right(Style.Group(hud,682,0,215,122));
+        Style.PanelAt(hull,0,0,215,122);Style.Label(hull,"KADŁUB",20,12,175,22,12,Style.Muted,true);
+        _hull=Style.Label(hull,"",20,48,175,30,24);
+        _hullBar=Style.Rect(new Meter { Tint=Style.Red },20,99,175,10);hull.AddChild(_hullBar);
+        var shield=Style.Right(Style.Group(hud,913,0,215,122));
+        Style.PanelAt(shield,0,0,215,122);Style.Label(shield,"OSŁONA",20,12,175,22,12,Style.Muted,true);
+        _shield=Style.Label(shield,"",20,48,175,30,24);
+        _shieldBar=Style.Rect(new Meter { Tint=Style.Cyan },20,99,175,10);shield.AddChild(_shieldBar);
+        var drive=Style.Right(Style.Group(hud,1144,0,296,122));
+        Style.PanelAt(drive,0,0,296,122);Style.Label(drive,"NAPĘD / PRĘDKOŚĆ",20,12,260,22,12,Style.Muted,true);
+        _speed=Style.Label(drive,"",20,48,260,32,24);
+        Style.Label(drive,"Środek statku = punkt trafienia",20,93,260,25,11,Style.Muted);
+        _bindingsHint=Style.Bottom(Style.StretchRight(Style.Label(_arenaView,"",16,859,1408,20,11,Style.Muted,true)));
         _deadPanel=Style.PanelAt(_arenaView,333,297,450,195);
         Style.Label(_deadPanel,"KADŁUB ZNISZCZONY",24,20,400,36,26,Style.Red);
         Style.Label(_deadPanel,"To laboratorium. Możesz naprawić statek\nlub przywrócić jego konfigurację początkową.",24,66,400,52,15,Style.Muted);
         Style.Button(_deadPanel,"Napraw i wróć do lotu",24,133,402,43,()=>Simulation.Repair(),true);
+        Flight.Resized+=()=>_deadPanel.Position=Flight.Bounds.GetCenter()-_deadPanel.Size/2;
     }
     public void TestDamage()
     {
@@ -119,6 +126,7 @@ public partial class Main : Control
     }
     public void ShowView(string view)
     {
+        if(_view=="editor" && view!="editor")Grid.Cancel();
         _view=view;_arenaView.Visible=view=="arena";_editorView.Visible=view=="editor";_settingsView.Visible=view=="settings";
         Input.MouseMode=Input.MouseModeEnum.Visible;
         GetViewport().GuiReleaseFocus();
@@ -129,7 +137,7 @@ public partial class Main : Control
     public void AfterEdit()
     {
         Simulation.Refresh();UpdateInspector();Grid.QueueRedraw();UpdateEditorStats();
-        if(Grid.Pending==null)SetTool(Grid.Tool);
+        if(!Grid.HasPlacement)UpdateToolHint();
     }
     public override void _Process(double delta)
     {
@@ -158,16 +166,20 @@ public partial class Main : Control
     public override void _UnhandledInput(InputEvent ev)
     {
         if(_capture!=null || ev is InputEventKey { Echo:true })return;
+        if(_view=="editor" && Grid.HasPlacement && ev is InputEventKey { Pressed:true,Keycode:Key.Escape })
+        { Grid.Cancel();UpdateToolHint();GetViewport().SetInputAsHandled();return; }
         if(ev.IsActionPressed("menu"))
         {
             if(_view=="settings") ShowView(_previousView);
-            else if(_view=="editor" && Grid.Pending!=null) Grid.Cancel();
+            else if(_view=="editor" && Grid.HasPlacement) Grid.Cancel();
             else ShowSettings();
             GetViewport().SetInputAsHandled();return;
         }
         if(ev.IsActionPressed("ship") && _view!="settings")
         { ShowView(_view=="editor"?"arena":"editor");GetViewport().SetInputAsHandled();return; }
         if(_view!="editor" || GetViewport().GuiGetFocusOwner() is LineEdit)return;
+        if(ev.IsActionPressed("pickup"))
+        { Grid.PickUpHovered();GetViewport().SetInputAsHandled();return; }
         if(ev is InputEventKey { Pressed:true } key)
         {
             if(key.Keycode==Key.R) { Grid.RotateSelection();AfterEdit(); }

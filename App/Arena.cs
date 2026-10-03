@@ -5,7 +5,7 @@ namespace Orbital;
 
 public partial class Arena : Control
 {
-    public static readonly Rect2 Bounds=new(24,116,1068,570);
+    public Rect2 Bounds=>new(0,96,Math.Max(1,Size.X-324),Math.Max(1,Size.Y-270));
     public Func<float,FrameIntent,SimulationFrame> Tick { get; set; }=null!;
     public Func<bool> Paused { get; set; }=()=>false;
     public Func<bool> Dead { get; set; }=()=>false;
@@ -33,10 +33,10 @@ public partial class Arena : Control
     public override void _Ready()
     {
         MouseFilter=MouseFilterEnum.Ignore; TextureFilter=TextureFilterEnum.Nearest;
-        for(int i=0;i<160;i++) _stars.Add((new Vector2(_rng.Next(40,1075),_rng.Next(130,670)),(float)_rng.NextDouble()*1.3f+.4f,(float)_rng.NextDouble()*6));
+        for(int i=0;i<260;i++) _stars.Add((new Vector2((float)_rng.NextDouble(),(float)_rng.NextDouble()),(float)_rng.NextDouble()*1.3f+.4f,(float)_rng.NextDouble()*6));
     }
     public void Reset()
-    { ShipPosition=new(558,530);Velocity=Vector2.Zero;_projectiles.Clear();_sparks.Clear();_blasts.Clear();_dashVisual=false; }
+    { ShipPosition=new(Bounds.GetCenter().X,Bounds.End.Y-156);Velocity=Vector2.Zero;_projectiles.Clear();_sparks.Clear();_blasts.Clear();_dashVisual=false; }
     public void Hit()
     { _flash=.3f;_shake=5; Emit(ShipPosition,Style.Red,24,160);Audio.Play("hit"); }
     public override void _PhysicsProcess(double delta)
@@ -112,7 +112,7 @@ public partial class Arena : Control
     public override void _Draw()
     {
         DrawStyleBox(Style.Box(new Color("0b1321"),Style.Border),Bounds);
-        for(int x=48;x<1092;x+=48) for(int y=140;y<686;y+=48)
+        for(float x=Bounds.Position.X+24;x<Bounds.End.X;x+=48) for(float y=Bounds.Position.Y+24;y<Bounds.End.Y;y+=48)
             DrawCircle(new(x,y),.65f,new Color("213244"));
         var center=Bounds.GetCenter();
         DrawArc(center,200,0,Mathf.Tau,100,new Color("162635"),1);
@@ -120,9 +120,9 @@ public partial class Arena : Control
         DrawLine(center-new Vector2(18,0),center+new Vector2(18,0),new Color("324654"));
         DrawLine(center-new Vector2(0,18),center+new Vector2(0,18),new Color("324654"));
         foreach(var star in _stars)
-            DrawCircle(star.Pos,star.Size,new Color(.65f,.8f,.88f,.18f+.12f*Mathf.Sin(_clock*.45f+star.Phase)));
-        DrawString(Style.Mono,new(48,151),"SEKTOR 00   /   SWOBODNY LOT",HorizontalAlignment.Left,-1,12,Style.Muted);
-        DrawString(Style.Mono,new(48,665),$"POCISKI {ProjectileCount:000}   •   BRAK PRZECIWNIKÓW",HorizontalAlignment.Left,-1,11,Style.Muted);
+            DrawCircle(Bounds.Position+star.Pos*Bounds.Size,star.Size,new Color(.65f,.8f,.88f,.18f+.12f*Mathf.Sin(_clock*.45f+star.Phase)));
+        DrawString(Style.Mono,Bounds.Position+new Vector2(24,35),"SEKTOR 00   /   SWOBODNY LOT",HorizontalAlignment.Left,-1,12,Style.Muted);
+        DrawString(Style.Mono,new Vector2(24,Bounds.End.Y-21),$"POCISKI {ProjectileCount:000}   •   BRAK PRZECIWNIKÓW",HorizontalAlignment.Left,-1,11,Style.Muted);
         foreach(var blast in _blasts)
         {
             float progress=1-blast.Life/.5f,radius=blast.Radius*(.25f+.75f*progress);

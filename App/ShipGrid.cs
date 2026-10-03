@@ -8,7 +8,7 @@ public enum EditorTool { Select, Power, Control, Bridge, Erase }
 /// <summary>Grid interaction and rendering. All edits are validated by ShipLayout.</summary>
 public partial class ShipGrid : Control
 {
-    public const float CellSize=48;
+    public float CellSize { get; set; }=48;
     public Func<ShipLayout> Layout { get; set; }=null!;
     public Func<int,ModuleStatus?> Status { get; set; }=null!;
     public event Action<string>? Edited;
@@ -16,6 +16,8 @@ public partial class ShipGrid : Control
     public EditorTool Tool { get; private set; }
     public int? SelectedId { get; private set; }
     public ModuleKind? Pending { get; private set; }
+    public int? MovingId { get; private set; }
+    public bool HasPlacement=>Pending!=null || MovingId!=null;
     public int PlacementRotation { get; private set; }
     private Cell _hover=new(-1,-1);
     private Vector2 _pressPosition;
@@ -33,14 +35,32 @@ public partial class ShipGrid : Control
     public void Select(int? id)
     { SelectedId=id; SelectionChanged?.Invoke(id); QueueRedraw(); }
     public void Cancel()
-    { Pending=null; _dragId=null; _drawing=false; _dragging=false; _path.Clear(); QueueRedraw(); }
+    { Pending=null; MovingId=null; _dragId=null; _drawing=false; _dragging=false; _path.Clear(); QueueRedraw(); }
     public void RotateSelection()
     {
-        if(Pending!=null) { PlacementRotation=(PlacementRotation+1)%4; QueueRedraw(); return; }
+        if(HasPlacement)
+        {
+            if(MovingId is int heldId && Layout().Find(heldId) is { } moving)
+            {
+                int height=PlacementRotation%2==0?moving.Definition.Height:moving.Definition.Width;
+                _grabOffset=new(height-1-_grabOffset.Y,_grabOffset.X);
+            }
+            PlacementRotation=(PlacementRotation+1)%4; QueueRedraw(); return;
+        }
         if(SelectedId is int id) Report(Layout().TryRotate(id),"Moduł obrócony. Sprawdź położenie portów.");
+    }
+    public void PickUpHovered()
+    {
+        if(!GetGlobalRect().HasPoint(GetGlobalMousePosition()) || HasPlacement)return;
+        var cell=CellAt(GetLocalMousePosition());
+        if(Layout().ModuleAt(cell) is not { } module)return;
+        Cancel();Tool=EditorTool.Select;MovingId=module.Id;PlacementRotation=module.Rotation;
+        _hover=cell;_grabOffset=new(cell.X-module.Position.X,cell.Y-module.Position.Y);Select(module.Id);
+        Edited?.Invoke("Moduł w ręce: LPM umieszcza, R obraca, PPM / Esc przywraca poprzednie położenie.");
     }
     public void RemoveSelection()
     {
+        if(HasPlacement) { Cancel();return; }
         if(SelectedId is int id) { Layout().Remove(id); Select(null); Edited?.Invoke("Moduł usunięty. Kable pozostają na siatce."); }
     }
     private Cell CellAt(Vector2 p)=>new((int)Math.Floor(p.X/CellSize),(int)Math.Floor(p.Y/CellSize));
@@ -58,12 +78,23 @@ public partial class ShipGrid : Control
         }
         if(ev is not InputEventMouseButton mouse) return;
         _hover=CellAt(mouse.Position);
-        if(mouse.ButtonIndex==MouseButton.Right && mouse.Pressed) { Cancel(); AcceptEvent(); return; }
+        if(mouse.ButtonIndex==MouseButton.Right && mouse.Pressed)
+        {
+            if(HasPlacement || _drawing || _dragging)Cancel();
+            else RemoveAt(_hover);
+            AcceptEvent();return;
+        }
         if(mouse.ButtonIndex!=MouseButton.Left) return;
         AcceptEvent();
         if(mouse.Pressed)
         {
             if(!Layout().Contains(_hover)) return;
+            if(MovingId is int movingId)
+            {
+                var result=Layout().TryMove(movingId,new(_hover.X-_grabOffset.X,_hover.Y-_grabOffset.Y),PlacementRotation);
+                if(result.Success)Cancel();
+                Report(result,"Moduł przeniesiony. Jego ustawienia i ulepszenia zostały zachowane.");return;
+            }
             if(Tool is EditorTool.Power or EditorTool.Control)
             {
                 _path.Clear(); _path.Add(CablePoint(_hover)); _drawing=true;
@@ -71,12 +102,7 @@ public partial class ShipGrid : Control
             }
             if(Tool==EditorTool.Bridge)
             { Report(Layout().TrySetBridge(_hover,!Layout().IsBridge(_hover)),"Mostek zmieniony."); return; }
-            if(Tool==EditorTool.Erase)
-            {
-                if(Layout().ModuleAt(_hover) is { } module) { Layout().Remove(module.Id); Select(null); }
-                else { Layout().RemoveWire(_hover,WireKind.Power); Layout().RemoveWire(_hover,WireKind.Control); Layout().TrySetBridge(_hover,false); }
-                Edited?.Invoke("Element usunięty."); QueueRedraw(); return;
-            }
+            if(Tool==EditorTool.Erase) { RemoveAt(_hover);return; }
             if(Pending is { } kind)
             {
                 string addedMessage="Moduł dodany. Podłącz port energii i port sterowania.";
@@ -118,9 +144,23 @@ public partial class ShipGrid : Control
     }
     public override void _Input(InputEvent ev)
     {
+        if(IsVisibleInTree() && HasPlacement && ev is InputEventMouseButton { ButtonIndex:MouseButton.Right,Pressed:true })
+        { Cancel();Edited?.Invoke("Anulowano przenoszenie.");GetViewport().SetInputAsHandled();return; }
         // Release outside the grid must never leave a sticky cable or dragging state.
         if(IsVisibleInTree() && ev is InputEventMouseButton { ButtonIndex:MouseButton.Left, Pressed:false } && !GetGlobalRect().HasPoint(GetGlobalMousePosition()))
         { _drawing=false;_dragId=null;_dragging=false;_path.Clear();QueueRedraw(); }
+    }
+    private void RemoveAt(Cell cell)
+    {
+        if(!Layout().Contains(cell))return;
+        if(Layout().ModuleAt(cell) is { } module)
+        { Layout().Remove(module.Id);if(SelectedId==module.Id)Select(null); }
+        else
+        {
+            Layout().RemoveWire(cell,WireKind.Power);Layout().RemoveWire(cell,WireKind.Control);
+            Layout().TrySetBridge(cell,false);
+        }
+        Edited?.Invoke("Element usunięty.");QueueRedraw();
     }
     private void ExtendPath(Cell end)
     {
@@ -149,12 +189,12 @@ public partial class ShipGrid : Control
         }
         foreach(var wire in layout.Wires)
         {
-            Vector2 center=new(wire.Cell.X*CellSize+24,wire.Cell.Y*CellSize+24);
+            Vector2 center=new(wire.Cell.X*CellSize+CellSize/2,wire.Cell.Y*CellSize+CellSize/2);
             var color=wire.Kind==WireKind.Power?Style.Amber:Style.Cyan;
             var offset=layout.IsBridge(wire.Cell)?Vector2.Zero:wire.Kind==WireKind.Power?new Vector2(-2,-2):new Vector2(2,2);
             foreach(var direction in Directions.All.Where(d=>wire.Connections.HasFlag(d)))
             {
-                var delta=direction.Offset(); Vector2 end=center+new Vector2(delta.X,delta.Y)*24;
+                var delta=direction.Offset(); Vector2 end=center+new Vector2(delta.X,delta.Y)*CellSize/2;
                 DrawLine(center+offset,end+offset,new Color("060b10"),8);
                 DrawLine(center+offset,end+offset,color.Darkened(.15f),4);
                 DrawLine(center+offset,end+offset,color.Lightened(.25f),1);
@@ -163,13 +203,14 @@ public partial class ShipGrid : Control
         }
         foreach(var bridge in layout.Bridges)
         {
-            var c=new Vector2(bridge.X*CellSize+24,bridge.Y*CellSize+24);
+            var c=new Vector2(bridge.X*CellSize+CellSize/2,bridge.Y*CellSize+CellSize/2);
             DrawRect(new Rect2(c-new Vector2(10,8),new Vector2(20,16)),Style.Background);
             DrawArc(c,10,Mathf.Pi,Mathf.Tau,12,Style.Muted,3);
             DrawLine(c+new Vector2(0,-17),c+new Vector2(0,17),Style.Muted.Darkened(.25f),2);
         }
         foreach(var module in layout.Modules)
         {
+            if(module.Id==MovingId)continue;
             Rect2 rect=new(module.Position.X*CellSize+4,module.Position.Y*CellSize+4,module.Width*CellSize-8,module.Height*CellSize-8);
             var status=Status?.Invoke(module.Id);
             var color=module.Id==SelectedId?Style.Cyan:status!=null?Art.StateColor(status.State).Darkened(.55f):Style.Border;
@@ -199,22 +240,28 @@ public partial class ShipGrid : Control
                 var c=Center(_path[i]); DrawCircle(c,5,Tool==EditorTool.Power?Style.Amber:Style.Cyan);
                 if(i>0) DrawLine(Center(_path[i-1]),c,Style.Text,2);
             }
-        var candidate=Pending ?? (_dragging && _dragId is int moveId?layout.Find(moveId)?.Kind:null);
+        var candidate=Pending ?? (MovingId is int held?layout.Find(held)?.Kind:null) ?? (_dragging && _dragId is int moveId?layout.Find(moveId)?.Kind:null);
         if(candidate is { } kind)
         {
-            var pos=_dragging?new Cell(_hover.X-_grabOffset.X,_hover.Y-_grabOffset.Y):_hover;
+            var pos=_dragging || MovingId!=null?new Cell(_hover.X-_grabOffset.X,_hover.Y-_grabOffset.Y):_hover;
             int rotation=_dragging?layout.Find(_dragId!.Value)!.Rotation:PlacementRotation;
             var def=ModuleCatalog.Get(kind);
-            var valid=layout.CanPlace(kind,pos,rotation,_dragging?_dragId:null).Success;
+            var valid=layout.CanPlace(kind,pos,rotation,MovingId ?? (_dragging?_dragId:null)).Success;
             int w=rotation%2==0?def.Width:def.Height,h=rotation%2==0?def.Height:def.Width;
             var rect=new Rect2(pos.X*CellSize+2,pos.Y*CellSize+2,w*CellSize-4,h*CellSize-4);
             DrawRect(rect,new Color(valid?Style.Cyan:Style.Red,.18f));
             DrawRect(rect,valid?Style.Cyan:Style.Red,false,2);
+            var icon=Art.Icon(kind);
+            var size=icon.GetSize();if(rotation%2!=0)size=new(size.Y,size.X);
+            float scale=Math.Min((rect.Size.X-8)/size.X,(rect.Size.Y-8)/size.Y);
+            DrawSetTransform(rect.GetCenter(),rotation*Mathf.Pi/2);
+            DrawTextureRect(icon,new Rect2(-icon.GetSize()*scale/2,icon.GetSize()*scale),false,new Color(1,1,1,.75f));
+            DrawSetTransform(Vector2.Zero);
         }
         else if(layout.Contains(_hover))
-            DrawRect(new Rect2(_hover.X*48,_hover.Y*48,48,48),new Color(Style.Cyan,.25f),false,1);
+            DrawRect(new Rect2(_hover.X*CellSize,_hover.Y*CellSize,CellSize,CellSize),new Color(Style.Cyan,.25f),false,1);
     }
-    private static Vector2 Center(Cell cell)=>new(cell.X*CellSize+24,cell.Y*CellSize+24);
+    private Vector2 Center(Cell cell)=>new(cell.X*CellSize+CellSize/2,cell.Y*CellSize+CellSize/2);
     public override string _GetTooltip(Vector2 atPosition)
     {
         var module=Layout().ModuleAt(CellAt(atPosition));
@@ -225,7 +272,7 @@ public partial class ShipGrid : Control
     private void DrawPort(ShipModule module,WireKind kind)
     {
         var port=module.Port(kind);var dir=port.Facing.Offset();
-        var p=Center(port.Cell)+new Vector2(dir.X,dir.Y)*22;
+        var p=Center(port.Cell)+new Vector2(dir.X,dir.Y)*(CellSize/2-2);
         DrawRect(new Rect2(p-new Vector2(5,5),new Vector2(10,10)),Style.Background);
         DrawRect(new Rect2(p-new Vector2(3,3),new Vector2(6,6)),kind==WireKind.Power?Style.Amber:Style.Cyan);
     }

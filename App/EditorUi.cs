@@ -6,6 +6,7 @@ namespace Orbital;
 public partial class Main
 {
     private Control _inspector=null!;
+    private Label _editorShortcuts=null!;
     private Label _editorStats=null!,_toolHint=null!,_editorSelectionStatus=null!;
     private VBoxContainer _catalog=null!;
     private readonly Dictionary<EditorTool,Button> _toolButtons=new();
@@ -13,44 +14,57 @@ public partial class Main
     {
         _editorView=Screen();
         Header(_editorView,"ORBITAL  /  STOCZNIA","Zbuduj swój układ","Symulacja zatrzymana. Łącz systemy i sprawdzaj, jak zmienia się statek.");
-        Style.Button(_editorView,"Ustawienia",1112,35,140,46,ShowSettings);
-        Style.Button(_editorView,"Wróć do lotu  ↗",1264,35,152,46,()=>ShowView("arena"),true);
-        Style.PanelAt(_editorView,24,136,250,718);
-        Style.Label(_editorView,"KATALOG MODUŁÓW",42,149,218,24,13,Style.Cyan,true);
-        var search=Style.Rect(new LineEdit { PlaceholderText="Szukaj modułu…",ClearButtonEnabled=true },40,188,218,38);
-        _editorView.AddChild(search);
-        var scroll=Style.Rect(new ScrollContainer { HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled },36,241,230,565);
-        _editorView.AddChild(scroll);
+        Style.Right(Style.Button(_editorView,"Ustawienia",1136,35,140,46,ShowSettings));
+        Style.Right(Style.Button(_editorView,"Wróć do lotu  ↗",1288,35,152,46,()=>ShowView("arena"),true));
+        var catalog=Style.StretchBottom(Style.Group(_editorView,0,116,250,762));
+        Style.StretchBottom(Style.PanelAt(catalog,0,0,250,762));
+        Style.Label(catalog,"KATALOG MODUŁÓW",18,13,218,24,13,Style.Cyan,true);
+        var search=Style.Rect(new LineEdit { PlaceholderText="Szukaj modułu…",ClearButtonEnabled=true },16,52,218,38);
+        catalog.AddChild(search);
+        var scroll=Style.Rect(new ScrollContainer { HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled },12,105,230,609);
+        catalog.AddChild(scroll);Style.StretchBottom(scroll);
         _catalog=new VBoxContainer { SizeFlagsHorizontal=SizeFlags.ExpandFill };
         _catalog.AddThemeConstantOverride("separation",6);scroll.AddChild(_catalog);
         search.TextChanged+=text=>PopulateCatalog(text);PopulateCatalog("");
-        Style.Label(_editorView,"∞  BEZ KOSZTÓW / BEZ LIMITU",42,821,218,20,10,Style.Muted,true);
+        Style.Bottom(Style.Label(catalog,"∞  BEZ KOSZTÓW / BEZ LIMITU",18,729,218,20,10,Style.Muted,true));
 
+        var center=Style.StretchBottom(Style.StretchRight(Style.Group(_editorView,268,116,860,762)));
         var toolNames=new[] { "1  Wybór", "2  Energia", "3  Dane", "4  Mostek", "5  Usuń" };
         for(int i=0;i<5;i++)
         {
             var tool=(EditorTool)i;
-            _toolButtons[tool]=Style.Button(_editorView,toolNames[i],292+i*113,136,105,43,()=>SetTool(tool));
+            _toolButtons[tool]=Style.Button(center,toolNames[i],i*113,0,105,43,()=>SetTool(tool));
         }
-        Style.Button(_editorView,"Połącz automatycznie",865,136,239,43,()=>
+        Style.Right(Style.Button(center,"Połącz automatycznie",621,0,239,43,()=>
         {
+            Grid.Cancel();
             var errors=Layout.AutoConnectAll();AfterEdit();
             Toast(errors.Count==0?"Wszystkie dostępne porty połączone. Sprawdź statusy modułów.":$"Nie połączono {errors.Count} tras. Zwolnij miejsce wokół portów.");
-        });
-        _toolHint=Style.Label(_editorView,"",310,194,788,49,13,Style.Muted);
-        Style.PanelAt(_editorView,292,246,812,516);
-        Grid=Style.Rect(new ShipGrid { Layout=()=>Layout, Status=id=>Simulation.Status.GetValueOrDefault(id) },314,264,768,480);
-        _editorView.AddChild(Grid);
+        }));
+        _toolHint=Style.StretchRight(Style.Label(center,"",16,58,828,49,13,Style.Muted));
+        var frame=Style.StretchBottom(Style.StretchRight(Style.PanelAt(center,0,110,860,552)));
+        Grid=Style.Rect(new ShipGrid { Layout=()=>Layout, Status=id=>Simulation.Status.GetValueOrDefault(id) },0,0,768,480);
+        frame.AddChild(Grid);
+        var numbers=Enumerable.Range(1,16).Select(x=>Style.Label(frame,x.ToString("00"),0,0,46,16,9,Style.Muted,true)).ToArray();
+        foreach(var label in numbers)label.HorizontalAlignment=HorizontalAlignment.Center;
+        void ResizeGrid()
+        {
+            Grid.CellSize=MathF.Floor(Math.Min((frame.Size.X-16)/16,(frame.Size.Y-26)/10));
+            Grid.Size=new(Grid.CellSize*16,Grid.CellSize*10);
+            Grid.Position=new((frame.Size.X-Grid.Size.X)/2,18+(frame.Size.Y-18-Grid.Size.Y)/2);
+            for(int x=0;x<16;x++) { numbers[x].Position=new(Grid.Position.X+x*Grid.CellSize,Grid.Position.Y-18);numbers[x].Size=new(Grid.CellSize,16); }
+            Grid.QueueRedraw();
+        }
+        frame.Resized+=ResizeGrid;ResizeGrid();
         Grid.SelectionChanged+=_=>UpdateInspector();
         Grid.Edited+=message=>{ AfterEdit();Toast(message); };
-        for(int x=0;x<16;x++)Style.Label(_editorView,(x+1).ToString("00"),314+x*48,246,46,16,9,Style.Muted,true).HorizontalAlignment=HorizontalAlignment.Center;
-        Style.Label(_editorView,"■  ENERGIA",308,774,150,24,11,Style.Amber,true);
-        Style.Label(_editorView,"■  STEROWANIE",456,774,185,24,11,Style.Cyan,true);
-        Style.Label(_editorView,"R  OBRÓT     DEL  USUŃ     PPM  ANULUJ",681,774,407,24,11,Style.Muted,true);
-        Style.PanelAt(_editorView,292,807,812,47);
-        _editorStats=Style.Label(_editorView,"",309,818,780,25,12,Style.Muted,true);
+        Style.Bottom(Style.Label(center,"■  ENERGIA",16,674,130,24,11,Style.Amber,true));
+        Style.Bottom(Style.Label(center,"■  STEROWANIE",150,674,165,24,11,Style.Cyan,true));
+        _editorShortcuts=Style.Bottom(Style.Right(Style.Label(center,"",334,674,520,24,11,Style.Muted,true)));
+        Style.Bottom(Style.StretchRight(Style.PanelAt(center,0,715,860,47)));
+        _editorStats=Style.Bottom(Style.StretchRight(Style.Label(center,"",17,726,828,25,12,Style.Muted,true)));
 
-        _inspector=Style.PanelAt(_editorView,1122,136,294,718);
+        _inspector=Style.Right(Style.StretchBottom(Style.PanelAt(_editorView,1146,116,294,762)));
         SetTool(EditorTool.Select);UpdateInspector();
     }
     private void PopulateCatalog(string filter)
@@ -86,10 +100,14 @@ public partial class Main
     }
     private void SetTool(EditorTool tool)
     {
-        Grid?.SetTool(tool);HighlightTool(tool);
-        _toolHint.Text=tool switch
+        Grid?.SetTool(tool);HighlightTool(tool);UpdateToolHint();
+    }
+    private void UpdateToolHint()
+    {
+        _editorShortcuts.Text=$"{Controls.Name("pickup")}  PODNIEŚ   R  OBRÓT   PPM  USUŃ / ANULUJ";
+        _toolHint.Text=Grid.Tool switch
         {
-            EditorTool.Select=>"Kliknij moduł, aby go skonfigurować. Przeciągnij, aby zmienić położenie.\nNowe podzespoły wybierzesz z katalogu po lewej.",
+            EditorTool.Select=>"Kliknij moduł, aby go skonfigurować. Przeciągnij lub podnieś go skrótem.\nPPM usuwa wskazany obiekt; podczas przenoszenia PPM / Esc anuluje.",
             EditorTool.Power=>"Energia: przeciągnij od modułu do modułu, aby wyznaczyć trasę.\nNa pustych polach rysuj ręcznie; skrzyżowania tego samego typu łączą sieci.",
             EditorTool.Control=>"Sterowanie: połącz dowodzenie ze sterownikami, a sterowniki z podzespołami.\nPrzeciągnięcie między modułami wyznacza trasę. Sygnał nie przechodzi przez moduły.",
             EditorTool.Bridge=>"Kliknij pole, aby dodać lub usunąć mostek.\nNa mostku trasy pionowa i pozioma przechodzą bez połączenia.",
