@@ -26,6 +26,9 @@ Kabel zasilania przesyła energię od producentów do odbiorców.
 Kabel sterowania przesyła dane od modułów sterowania do odpowiadających im podzespołów.
 Moduł dowodzenia musi być połączony ze wszystkimi sterownikami. Trasa i rozgałęzienia kabli mogą być dowolne, ale sygnał sterowania nie może przechodzić przez inne moduły.
 Każdy podzespół musi być połączony ze swoim sterownikiem, z potwierdzonym wyjątkiem generatora głównego, który nie wymaga sterownika.
+Dane dowodzenia tworzą osobną sieć: moduł dowodzenia → wejścia wszystkich sterowników. Każdy sterownik ma osobne wejście danych dowodzenia i wyjście danych swojego systemu, oprócz złącza zasilania.
+Sieci wyjściowe są rozdzielone według systemów: napęd (silniki i zryw), uzbrojenie (wszystkie bronie), energia (baterie, generatory awaryjne i sprzężenia zwrotnego) oraz osłony. Podzespoły tego samego systemu mogą współdzielić sieć. Generator główny nadal nie wymaga sterowania.
+Nie wolno łączyć danych różnych systemów ani danych dowodzenia z danymi systemu. Próba takiego połączenia pokazuje błąd i zostaje odrzucona bez zmiany istniejącej instalacji. Mostki umożliwiają niezależne skrzyżowania tych sieci. Wejście i wyjście sterownika nie są wewnętrznym mostkiem kablowym; podzespół wymaga działającego sterownika i jego połączenia z dowodzeniem.
 Skrzyżowanie kabli tego samego typu automatycznie łączy je w sieć.
 Mostek kablowy pozwala przeprowadzić kabel ponad innym kablem, bez połączenia ich sieci. Jest elementem prowadzenia kabli; nie znosi zakazu prowadzenia kabla pod modułem.
 Dokładne wymiary i rozmieszczenie złączy pozostają do ustalenia.
@@ -140,7 +143,7 @@ Powyższe szczegóły nie zmieniają już potwierdzonych zasad. Parametry użyte
 8. Wersja testowa semi_goal — zatwierdzony wyjątek od reguł pełnej gry
 Pusta arena bez przeciwników z działającym ruchem, blasterem, rakietą, energią, osłonami i zrywem po zamontowaniu właściwych modułów.
 Pełnoekranowy panel statku jest dostępny w dowolnym momencie przez przycisk i klawisz Tab; nie wymaga awansu. Zatrzymuje symulację.
-Siatka ma roboczo 16 × 10 pól. Wszystkie moduły są dostępne bezpłatnie w wielu egzemplarzach; ulepszenia też nic nie kosztują.
+Siatka ma roboczo 18 × 12 pól. Wszystkie moduły są dostępne bezpłatnie w wielu egzemplarzach; ulepszenia też nic nie kosztują.
 Można dodawać, przesuwać, obracać i usuwać moduły oraz edytować kable i mostki. Pomocnicze automatyczne trasowanie nie zastępuje reguł połączeń. Przycisk „Połącz automatycznie” jest wyłącznie narzędziem prototypu; w finalnej wersji gry nie będzie tego przycisku.
 Domyślne sterowanie: WASD — ruch, Spacja — zryw, LPM/PPM — kanały broni, Tab — panel, Esc — ustawienia. F11 przełącza pełny ekran.
 Przypisania klawiszy i przycisków myszy oraz ustawienia audio są zapisywane między uruchomieniami. Konfiguracja statku i stan rozgrywki nie są zapisywane; start zawsze od zestawu początkowego.
@@ -150,3 +153,5 @@ Brak własnej grafiki sterownika osłon jest tymczasowo rozwiązany ikoną osło
 Rozwój kodu odbywa się z użyciem Gita i commitów spójnych etapów. Wymienione wcześniej zasady awansów, kosztów i utraty postępu dotyczą pełnej gry; laboratorium służy testowaniu modułów.
 
 Aktualizacja interfejsu semi_goal: większa arena i siatka statku, bez zewnętrznych marginesów. PPM usuwa moduł lub kable i mostek ze wskazanego pola bez potwierdzenia. Q podnosi moduł spod kursora; LPM odkłada, R obraca, Esc lub PPM anuluje i zachowuje poprzednie położenie. Podczas przenoszenia PPM nie usuwa obiektu spod kursora. Przeniesienie zachowuje ID, ulepszenia, priorytet i ustawienia broni; kable pozostają na swoich polach. Skrót podnoszenia można zmienić w ustawieniach.
+
+Aktualizacja sieci: siatka prototypu ma 18 × 12 pól (216 zamiast 160). Oddzielne sieci danych mają osobne kolory i wybór typu kabla w panelu. Rozpoczęcie rysowania na module wybiera najbliższe złącze danych. Błędne połączenia oraz usunięcie mostka mieszające różne sieci są odrzucane.

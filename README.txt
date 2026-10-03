@@ -39,12 +39,23 @@ Przeniesienie zachowuje ulepszenia, priorytet i konfigurację broni. Kable pozos
 Poza przenoszeniem PPM usuwa wskazany moduł lub kable wraz z mostkiem z jednego pola, bez potwierdzenia.
 Skrót podnoszenia można zmienić w ustawieniach. Może dzielić klawisz z akcją używaną tylko podczas lotu.
 Wcześniejsze ustawienia są zachowane; przy konflikcie Q z menu/panelem nowy skrót otrzyma wolne E lub T.
-Wszystkie moduły i ulepszenia są bezpłatne. Ograniczeniem rozmieszczenia jest siatka 16 × 10.
+Wszystkie moduły i ulepszenia są bezpłatne. Ograniczeniem rozmieszczenia jest siatka 18 × 12.
 Osłona dodaje też sterownik, jeśli jeszcze go nie masz i na siatce jest miejsce.
 Sterownik osłon używa roboczo ikony emitera z oznaczeniem C.
 
 Narzędzia 1–5: wybór, energia, dane, mostek, usuwanie.
-Pomarańczowy port i kabel to zasilanie, turkusowy to sterowanie.
+Pomarańczowy port i kabel to prąd. Dane mają osobne sieci:
+- turkusowy: dowodzenie → wejścia sterowników;
+- niebieski: sterownik napędu → silniki i zryw;
+- zielony: sterownik zasilania → baterie i dodatkowe generatory;
+- koralowy: sterownik uzbrojenia → wszystkie bronie;
+- fioletowy: sterownik osłon → emitery osłon.
+Sterownik ma trzy złącza: prąd, wejście dowodzenia i wyjście własnego systemu.
+W trybie „3 Dane” wybierz typ sieci z listy. Przy rozpoczęciu na module typ jest wybierany
+według najbliższego złącza danych, dlatego zacznij przeciąganie przy właściwym porcie.
+Inspektor i podpowiedzi opisują wejścia i wyjścia. Generator główny nie ma złącza danych.
+Różne sieci nie mogą się łączyć; błędna operacja wyświetla komunikat i niczego nie zmienia.
+Mostek pozwala im się skrzyżować. Nie można usunąć samego mostka, jeśli pomieszałoby to sieci.
 W trybie kabla przeciągnięcie między modułami wyznacza trasę automatycznie.
 Przeciągnięcie przez wolne pola rysuje własną trasę, zatwierdzaną po puszczeniu przycisku.
 Ten sam typ kabli łączy się na skrzyżowaniu. Mostek rozdziela trasę pionową i poziomą.

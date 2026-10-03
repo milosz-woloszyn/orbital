@@ -64,3 +64,5 @@ Etap 5 — przygotowanie gry
 Kolejność jest propozycją realizacji. Zaznaczone ustalenia oznaczają decyzje projektowe lub istniejące zasoby, nie gotowe mechaniki. Otwarte szczegóły pozostają opisane w assumptions. Wersja semi_goal realizuje osobny zakres laboratorium opisany w pliku semi_goal. Powyższe etapy nadal opisują pełną grę, w tym przyszłe awanse, ekonomię i przeciwników.
 
 Ustalenie interfejsu docelowego: nie udostępniać przycisku „Połącz automatycznie”. W laboratorium semi_goal pozostaje on narzędziem testowym.
+
+Doprecyzowanie kabli danych: osobna sieć dowodzenia oraz oddzielne sieci napędu, energii, uzbrojenia i osłon; sterowniki mają oddzielne wejście i wyjście. Mieszanie różnych sieci jest blokowane, skrzyżowania przez mostki pozostają dostępne. Prototyp używa siatki 18 × 12 pól.

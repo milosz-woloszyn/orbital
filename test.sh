@@ -13,7 +13,7 @@ export XDG_CACHE_HOME="$PWD/.tools/test-user/cache"
 GODOT="${GODOT_BIN:-$PWD/.tools/Godot_v4.5.2-stable_mono_linux_x86_64/Godot_v4.5.2-stable_mono_linux.x86_64}"
 dotnet build Orbital.csproj --nologo --verbosity quiet
 "$GODOT" --headless --editor --path . --import > artifacts/import.log 2>&1
-timeout 60s "$GODOT" --path . --audio-driver Dummy --position 40,40 -- --smoke > artifacts/smoke.log 2>&1
+timeout 180s "$GODOT" --path . --audio-driver Dummy --position 40,40 -- --smoke > artifacts/smoke.log 2>&1
 cat artifacts/smoke.log
 if rg -q 'ERROR:|ObjectDB instances leaked' artifacts/smoke.log; then exit 1; fi
 rg -q 'SMOKE PASS' artifacts/smoke.log

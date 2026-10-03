@@ -51,6 +51,23 @@ public static class Art
         ModuleKind.Rocket=>"Zapamiętuje pozycję kursora.\nWybucha po dotarciu do celu.",
         ModuleKind.Shield=>"Ładuje osłonę za energię.\nObrażenia nadmiarowe trafiają w kadłub.",_=>""
     };
+    public static string WireName(WireKind kind)=>kind switch
+    {
+        WireKind.Power=>"Zasilanie",WireKind.Control=>"Dowodzenie",WireKind.EngineData=>"Napęd",
+        WireKind.PowerData=>"System energii",WireKind.WeaponData=>"Uzbrojenie",WireKind.ShieldData=>"Osłony",_=>kind.ToString()
+    };
+    public static Color WireColor(WireKind kind)=>kind switch
+    {
+        WireKind.Power=>Style.Amber,WireKind.Control=>Style.Cyan,WireKind.EngineData=>new("78adff"),
+        WireKind.PowerData=>Style.Green,WireKind.WeaponData=>Style.Red,WireKind.ShieldData=>new("cd9eff"),_=>Style.Muted
+    };
+    public static string DataPorts(ShipModule module)
+    {
+        var labels=new List<string>();
+        if(module.DataInputKind is { } input)labels.Add($"WE: {WireName(input)}");
+        if(module.DataOutputKind is { } output)labels.Add($"WY: {WireName(output)}");
+        return labels.Count==0?"Brak złączy danych":string.Join("  /  ",labels);
+    }
     public static string State(ModuleState state)=>state switch
     {
         ModuleState.Active=>"PRACUJE",ModuleState.Idle=>"GOTOWY",ModuleState.NoControl=>"BRAK STEROWANIA",

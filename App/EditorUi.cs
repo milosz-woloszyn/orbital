@@ -6,6 +6,7 @@ namespace Orbital;
 public partial class Main
 {
     private Control _inspector=null!;
+    private OptionButton _dataKindSelect=null!;
     private Label _editorShortcuts=null!;
     private Label _editorStats=null!,_toolHint=null!,_editorSelectionStatus=null!;
     private VBoxContainer _catalog=null!;
@@ -41,26 +42,38 @@ public partial class Main
             var errors=Layout.AutoConnectAll();AfterEdit();
             Toast(errors.Count==0?"Wszystkie dostępne porty połączone. Sprawdź statusy modułów.":$"Nie połączono {errors.Count} tras. Zwolnij miejsce wokół portów.");
         }));
-        _toolHint=Style.StretchRight(Style.Label(center,"",16,58,828,49,13,Style.Muted));
+        _toolHint=Style.StretchRight(Style.Label(center,"",16,58,555,49,12,Style.Muted));
+        _dataKindSelect=Style.Rect(new OptionButton(),621,60,239,36);center.AddChild(_dataKindSelect);Style.Right(_dataKindSelect);
+        foreach(var kind in Enum.GetValues<WireKind>().Where(k=>k!=WireKind.Power))
+            _dataKindSelect.AddItem("Dane: "+Art.WireName(kind),(int)kind);
+        _dataKindSelect.TooltipText="Typ sieci podczas rysowania po pustych polach. Start na module wybiera najbliższe złącze danych.";
         var frame=Style.StretchBottom(Style.StretchRight(Style.PanelAt(center,0,110,860,552)));
         Grid=Style.Rect(new ShipGrid { Layout=()=>Layout, Status=id=>Simulation.Status.GetValueOrDefault(id) },0,0,768,480);
         frame.AddChild(Grid);
-        var numbers=Enumerable.Range(1,16).Select(x=>Style.Label(frame,x.ToString("00"),0,0,46,16,9,Style.Muted,true)).ToArray();
+        var numbers=Enumerable.Range(1,Layout.Width).Select(x=>Style.Label(frame,x.ToString("00"),0,0,46,16,9,Style.Muted,true)).ToArray();
         foreach(var label in numbers)label.HorizontalAlignment=HorizontalAlignment.Center;
         void ResizeGrid()
         {
-            Grid.CellSize=MathF.Floor(Math.Min((frame.Size.X-16)/16,(frame.Size.Y-26)/10));
-            Grid.Size=new(Grid.CellSize*16,Grid.CellSize*10);
+            Grid.CellSize=MathF.Floor(Math.Min((frame.Size.X-16)/Layout.Width,(frame.Size.Y-26)/Layout.Height));
+            Grid.Size=new(Grid.CellSize*Layout.Width,Grid.CellSize*Layout.Height);
             Grid.Position=new((frame.Size.X-Grid.Size.X)/2,18+(frame.Size.Y-18-Grid.Size.Y)/2);
-            for(int x=0;x<16;x++) { numbers[x].Position=new(Grid.Position.X+x*Grid.CellSize,Grid.Position.Y-18);numbers[x].Size=new(Grid.CellSize,16); }
+            for(int x=0;x<Layout.Width;x++) { numbers[x].Position=new(Grid.Position.X+x*Grid.CellSize,Grid.Position.Y-18);numbers[x].Size=new(Grid.CellSize,16); }
             Grid.QueueRedraw();
         }
         frame.Resized+=ResizeGrid;ResizeGrid();
         Grid.SelectionChanged+=_=>UpdateInspector();
+        Grid.DataKindChanged+=kind=>
+        {
+            _dataKindSelect.Select(_dataKindSelect.GetItemIndex((int)kind));
+            _dataKindSelect.AddThemeColorOverride("font_color",Art.WireColor(kind));
+            HighlightTool(EditorTool.Control);UpdateToolHint();
+        };
+        _dataKindSelect.ItemSelected+=index=>Grid.SetDataKind((WireKind)_dataKindSelect.GetItemId((int)index));
         Grid.Edited+=message=>{ AfterEdit();Toast(message); };
-        Style.Bottom(Style.Label(center,"■  ENERGIA",16,674,130,24,11,Style.Amber,true));
-        Style.Bottom(Style.Label(center,"■  STEROWANIE",150,674,165,24,11,Style.Cyan,true));
-        _editorShortcuts=Style.Bottom(Style.Right(Style.Label(center,"",334,674,520,24,11,Style.Muted,true)));
+        string[] legend=["PRĄD","DOWODZ.","NAPĘD","ENERGIA","BROŃ","OSŁONY"];
+        for(int i=0;i<legend.Length;i++)
+            Style.Bottom(Style.Label(center,"■ "+legend[i],16+i*137,665,130,20,10,Art.WireColor((WireKind)i),true));
+        _editorShortcuts=Style.Bottom(Style.Right(Style.Label(center,"",334,690,520,20,10,Style.Muted,true)));
         Style.Bottom(Style.StretchRight(Style.PanelAt(center,0,715,860,47)));
         _editorStats=Style.Bottom(Style.StretchRight(Style.Label(center,"",17,726,828,25,12,Style.Muted,true)));
 
@@ -107,9 +120,9 @@ public partial class Main
         _editorShortcuts.Text=$"{Controls.Name("pickup")}  PODNIEŚ   R  OBRÓT   PPM  USUŃ / ANULUJ";
         _toolHint.Text=Grid.Tool switch
         {
-            EditorTool.Select=>"Kliknij moduł, aby go skonfigurować. Przeciągnij lub podnieś go skrótem.\nPPM usuwa wskazany obiekt; podczas przenoszenia PPM / Esc anuluje.",
-            EditorTool.Power=>"Energia: przeciągnij od modułu do modułu, aby wyznaczyć trasę.\nNa pustych polach rysuj ręcznie; skrzyżowania tego samego typu łączą sieci.",
-            EditorTool.Control=>"Sterowanie: połącz dowodzenie ze sterownikami, a sterowniki z podzespołami.\nPrzeciągnięcie między modułami wyznacza trasę. Sygnał nie przechodzi przez moduły.",
+            EditorTool.Select=>"Kliknij moduł lub podnieś go skrótem. PPM usuwa obiekt.\nPodczas przenoszenia PPM / Esc anuluje.",
+            EditorTool.Power=>"Prąd: przeciągnij od złącza do złącza lub rysuj po polach.\nSkrzyżowanie z inną siecią wymaga mostka.",
+            EditorTool.Control=>"Dane: wybierz złącze lub typ sieci z listy obok.\nRóżne systemy krzyżuj mostkiem. Nie wolno ich łączyć.",
             EditorTool.Bridge=>"Kliknij pole, aby dodać lub usunąć mostek.\nNa mostku trasy pionowa i pozioma przechodzą bez połączenia.",
             _=>"Kliknij, aby usunąć moduł albo kable i mostek z pola.\nUsunięcie modułu nie usuwa pozostałych kabli."
         };
@@ -123,7 +136,7 @@ public partial class Main
     {
         if(_editorStats==null)return;
         int ready=Simulation.Status.Values.Count(s=>s.Powered),count=Layout.Modules.Count;
-        _editorStats.Text=$"SIATKA 16 × 10    MODUŁY {count:00}    GOTOWE {ready:00}    UWAGI {count-ready:00}    POJEMNOŚĆ {Simulation.Capacity:0} E";
+        _editorStats.Text=$"SIATKA {Layout.Width} × {Layout.Height}    MODUŁY {count:00}    GOTOWE {ready:00}    UWAGI {count-ready:00}    POJEMNOŚĆ {Simulation.Capacity:0} E";
         if(Grid.SelectedId is int id && _editorSelectionStatus!=null && Simulation.Status.TryGetValue(id,out var status))
         { _editorSelectionStatus.Text=Art.State(status.State);_editorSelectionStatus.AddThemeColorOverride("font_color",Art.StateColor(status.State)); }
     }
@@ -148,7 +161,8 @@ public partial class Main
         var status=Simulation.Status.GetValueOrDefault(id);
         _editorSelectionStatus=Style.Label(_inspector,status!=null?Art.State(status.State):"—",20,102,254,25,12,status!=null?Art.StateColor(status.State):Style.Muted,true);
         Style.Label(_inspector,Art.Description(module.Kind),20,141,254,58,14,Style.Muted);
-        var reason=Style.Label(_inspector,status?.Reason??"",20,207,254,53,12,Style.Muted);reason.AutowrapMode=TextServer.AutowrapMode.WordSmart;
+        var reason=Style.Label(_inspector,status?.Reason??"",20,201,254,36,11,Style.Muted);reason.AutowrapMode=TextServer.AutowrapMode.WordSmart;
+        var ports=Style.Label(_inspector,Art.DataPorts(module),20,240,254,35,11,Style.Cyan);ports.AutowrapMode=TextServer.AutowrapMode.WordSmart;
         Style.Label(_inspector,"Priorytet energii",20,283,163,27,15);
         var priority=Spin(_inspector,190,277,84,40,1,10,1,module.Priority);
         priority.ValueChanged+=value=>{ module.Priority=(int)value;Simulation.Refresh();UpdateEditorStats();Grid.QueueRedraw(); };

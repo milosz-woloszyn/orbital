@@ -28,7 +28,12 @@ public partial class Main : Control
         Theme=Style.CreateTheme(); Art.Load();
         _smoke=OS.GetCmdlineUserArgs().Contains("--smoke");
         Controls=new Bindings(!_smoke);
-        if(_smoke) { Controls.MusicVolume=0;Controls.EffectsVolume=0; }
+        if(_smoke)
+        {
+            Controls.MusicVolume=0;Controls.EffectsVolume=0;
+            // Integration input should not depend on the desktop compositor's refresh rate.
+            DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);Engine.MaxFps=60;
+        }
         _audio=new Sound(this,Controls);
         ResetShip(false);
         BuildArena();BuildEditor();BuildSettings();

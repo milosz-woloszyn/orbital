@@ -13,6 +13,8 @@ public partial class ShipGrid : Control
     public Func<int,ModuleStatus?> Status { get; set; }=null!;
     public event Action<string>? Edited;
     public event Action<int?>? SelectionChanged;
+    public event Action<WireKind>? DataKindChanged;
+    public WireKind DataKind { get; private set; }=WireKind.Control;
     public EditorTool Tool { get; private set; }
     public int? SelectedId { get; private set; }
     public ModuleKind? Pending { get; private set; }
@@ -30,6 +32,11 @@ public partial class ShipGrid : Control
     { MouseDefaultCursorShape=CursorShape.Cross; TextureFilter=TextureFilterEnum.Nearest; }
     public void SetTool(EditorTool tool)
     { Tool=tool; Cancel(); QueueRedraw(); }
+    public void SetDataKind(WireKind kind)
+    {
+        if(kind==WireKind.Power)return;
+        Cancel();DataKind=kind;Tool=EditorTool.Control;DataKindChanged?.Invoke(kind);QueueRedraw();
+    }
     public void BeginAdd(ModuleKind kind)
     { Cancel(); Tool=EditorTool.Select; Pending=kind; PlacementRotation=0; Select(null); QueueRedraw(); }
     public void Select(int? id)
@@ -64,8 +71,8 @@ public partial class ShipGrid : Control
         if(SelectedId is int id) { Layout().Remove(id); Select(null); Edited?.Invoke("Moduł usunięty. Kable pozostają na siatce."); }
     }
     private Cell CellAt(Vector2 p)=>new((int)Math.Floor(p.X/CellSize),(int)Math.Floor(p.Y/CellSize));
-    private WireKind Kind=>Tool==EditorTool.Power?WireKind.Power:WireKind.Control;
-    private Cell CablePoint(Cell cell)=>Layout().ModuleAt(cell) is { } m ? m.Port(Kind).CableCell : cell;
+    private WireKind Kind=>Tool==EditorTool.Power?WireKind.Power:DataKind;
+    private Cell CablePoint(Cell cell)=>Layout().ModuleAt(cell) is { } m && m.HasPort(Kind) ? m.Port(Kind).CableCell : cell;
 
     public override void _GuiInput(InputEvent ev)
     {
@@ -98,8 +105,16 @@ public partial class ShipGrid : Control
             }
             if(Tool is EditorTool.Power or EditorTool.Control)
             {
+                var startModule=Layout().ModuleAt(_hover);
+                if(Tool==EditorTool.Control && startModule!=null)
+                {
+                    var ports=Enum.GetValues<WireKind>().Where(k=>k!=WireKind.Power && startModule.HasPort(k)).ToArray();
+                    if(ports.Length==0) { Edited?.Invoke("Ten moduł nie ma złącza danych.");return; }
+                    DataKind=ports.MinBy(k=>PortPoint(startModule,k).DistanceSquaredTo(mouse.Position));
+                    DataKindChanged?.Invoke(DataKind);
+                }
                 _path.Clear(); _path.Add(CablePoint(_hover)); _drawing=true;
-                _wireStartModule=Layout().ModuleAt(_hover)?.Id; QueueRedraw(); return;
+                _wireStartModule=startModule?.Id; QueueRedraw(); return;
             }
             if(Tool==EditorTool.Bridge)
             { Report(Layout().TrySetBridge(_hover,!Layout().IsBridge(_hover)),"Mostek zmieniony."); return; }
@@ -115,8 +130,13 @@ public partial class ShipGrid : Control
                     if(kind==ModuleKind.Shield && !Layout().Modules.Any(m=>m.Kind==ModuleKind.ShieldControl))
                     {
                         bool placed=false;
-                        for(int y=1;y<9 && !placed;y++) for(int x=0;x<16 && !placed;x++)
-                            placed=Layout().TryAdd(ModuleKind.ShieldControl,new(x,y),out _).Success;
+                        for(int y=1;y<Layout().Height-1 && !placed;y++) for(int x=1;x<Layout().Width && !placed;x++)
+                        {
+                            var cell=new Cell(x,y);
+                            // Leave room for all three ports of the supplied controller.
+                            if(new[] { Direction.North,Direction.West,Direction.South }.Any(d=>Layout().ModuleAt(cell+d.Offset())!=null))continue;
+                            placed=Layout().TryAdd(ModuleKind.ShieldControl,cell,out _).Success;
+                        }
                         if(!placed) addedMessage="Osłona dodana, ale brak miejsca na jej sterownik. Zwolnij pole i dodaj go z katalogu.";
                     }
                 }
@@ -132,9 +152,11 @@ public partial class ShipGrid : Control
             {
                 ExtendPath(CablePoint(_hover));
                 var end=Layout().ModuleAt(_hover);
-                var result=_wireStartModule is int start && end!=null && end.Id!=start
-                    ? Layout().TryConnect(start,end.Id,Kind,true)
-                    : Layout().TryDrawWire(Kind,_path);
+                var result=end!=null && !end.HasPort(Kind)
+                    ? EditResult.Fail($"Niezgodna sieć danych: {Art.WireName(Kind)}. Wybierz pasujące złącze.")
+                    : _wireStartModule is int start && end!=null && end.Id!=start
+                        ? Layout().TryConnect(start,end.Id,Kind,true)
+                        : Layout().TryDrawWire(Kind,_path);
                 _drawing=false; _path.Clear(); Report(result,"Połączenie zapisane.");
             }
             if(_dragging && _dragId is int id)
@@ -158,7 +180,7 @@ public partial class ShipGrid : Control
         { Layout().Remove(module.Id);if(SelectedId==module.Id)Select(null); }
         else
         {
-            Layout().RemoveWire(cell,WireKind.Power);Layout().RemoveWire(cell,WireKind.Control);
+            foreach(var kind in Enum.GetValues<WireKind>())Layout().RemoveWire(cell,kind);
             Layout().TrySetBridge(cell,false);
         }
         Edited?.Invoke("Element usunięty.");QueueRedraw();
@@ -191,7 +213,7 @@ public partial class ShipGrid : Control
         foreach(var wire in layout.Wires)
         {
             Vector2 center=new(wire.Cell.X*CellSize+CellSize/2,wire.Cell.Y*CellSize+CellSize/2);
-            var color=wire.Kind==WireKind.Power?Style.Amber:Style.Cyan;
+            var color=Art.WireColor(wire.Kind);
             var offset=layout.IsBridge(wire.Cell)?Vector2.Zero:wire.Kind==WireKind.Power?new Vector2(-2,-2):new Vector2(2,2);
             foreach(var direction in Directions.All.Where(d=>wire.Connections.HasFlag(d)))
             {
@@ -204,10 +226,12 @@ public partial class ShipGrid : Control
         }
         foreach(var bridge in layout.Bridges)
         {
-            var c=new Vector2(bridge.X*CellSize+CellSize/2,bridge.Y*CellSize+CellSize/2);
-            DrawRect(new Rect2(c-new Vector2(10,8),new Vector2(20,16)),Style.Background);
-            DrawArc(c,10,Mathf.Pi,Mathf.Tau,12,Style.Muted,3);
-            DrawLine(c+new Vector2(0,-17),c+new Vector2(0,17),Style.Muted.Darkened(.25f),2);
+            var c=Center(bridge);
+            var horizontal=layout.Wires.FirstOrDefault(w=>w.Cell==bridge && (w.Connections&(Direction.East|Direction.West))!=0);
+            var color=horizontal!=null?Art.WireColor(horizontal.Kind):Style.Muted;
+            DrawRect(new Rect2(c-new Vector2(10,6),new Vector2(20,12)),Style.Background);
+            DrawArc(c,10,Mathf.Pi,Mathf.Tau,12,Style.Background,7);
+            DrawArc(c,10,Mathf.Pi,Mathf.Tau,12,color,3);
         }
         foreach(var module in layout.Modules)
         {
@@ -232,13 +256,12 @@ public partial class ShipGrid : Control
             }
             DrawCircle(rect.End-new Vector2(7,7),3,status!=null?Art.StateColor(status.State):Style.Muted);
             DrawString(Style.Mono,rect.Position+new Vector2(5,rect.Size.Y-5),module.Priority.ToString(),HorizontalAlignment.Left,-1,11,Style.Text);
-            DrawPort(module,WireKind.Power);
-            if(module.Kind!=ModuleKind.Generator) DrawPort(module,WireKind.Control);
+            foreach(var portKind in Enum.GetValues<WireKind>().Where(module.HasPort))DrawPort(module,portKind);
         }
         if(_drawing)
             for(int i=0;i<_path.Count;i++)
             {
-                var c=Center(_path[i]); DrawCircle(c,5,Tool==EditorTool.Power?Style.Amber:Style.Cyan);
+                var c=Center(_path[i]); DrawCircle(c,5,Art.WireColor(Kind));
                 if(i>0) DrawLine(Center(_path[i-1]),c,Style.Text,2);
             }
         var candidate=Pending ?? (MovingId is int held?layout.Find(held)?.Kind:null) ?? (_dragging && _dragId is int moveId?layout.Find(moveId)?.Kind:null);
@@ -266,15 +289,24 @@ public partial class ShipGrid : Control
     public override string _GetTooltip(Vector2 atPosition)
     {
         var module=Layout().ModuleAt(CellAt(atPosition));
-        if(module==null)return "";
+        if(module==null)
+        {
+            var cell=CellAt(atPosition);
+            var wires=Layout().Wires.Where(w=>w.Cell==cell).Select(w=>Art.WireName(w.Kind));
+            return string.Join(" / ",wires)+(Layout().IsBridge(cell)?" — mostek, sieci rozdzielone":"");
+        }
         var status=Status(module.Id);
-        return $"{Art.Name(module.Kind)} · poziom {module.Level}\nPriorytet {module.Priority} · {module.Width} × {module.Height}\n{status?.Reason}";
+        return $"{Art.Name(module.Kind)} · poziom {module.Level}\nPriorytet {module.Priority} · {module.Width} × {module.Height}\n{Art.DataPorts(module)}\n{status?.Reason}";
+    }
+    private Vector2 PortPoint(ShipModule module,WireKind kind)
+    {
+        var port=module.Port(kind);var dir=port.Facing.Offset();
+        return Center(port.Cell)+new Vector2(dir.X,dir.Y)*(CellSize/2-2);
     }
     private void DrawPort(ShipModule module,WireKind kind)
     {
-        var port=module.Port(kind);var dir=port.Facing.Offset();
-        var p=Center(port.Cell)+new Vector2(dir.X,dir.Y)*(CellSize/2-2);
+        var p=PortPoint(module,kind);
         DrawRect(new Rect2(p-new Vector2(5,5),new Vector2(10,10)),Style.Background);
-        DrawRect(new Rect2(p-new Vector2(3,3),new Vector2(6,6)),kind==WireKind.Power?Style.Amber:Style.Cyan);
+        DrawRect(new Rect2(p-new Vector2(3,3),new Vector2(6,6)),Art.WireColor(kind));
     }
 }

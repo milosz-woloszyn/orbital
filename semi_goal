@@ -4,7 +4,7 @@ Zatwierdzony zakres
 - Godot 4 .NET + C#, aplikacja na Linux x86_64.
 - Pusta arena bez przeciwników. Ruch, celowanie, blaster, rakiety, zryw, energia i osłony działają.
 - Pełnoekranowy panel statku otwierany przyciskiem oraz przypisanym klawiszem; symulacja jest wtedy zatrzymana.
-- Siatka 16 × 10; moduły można dodawać, przesuwać, obracać, usuwać i bezpłatnie ulepszać.
+- Siatka 18 × 12; moduły można dodawać, przesuwać, obracać, usuwać i bezpłatnie ulepszać.
 - Wszystkie rodzaje modułów są dostępne bez kosztów, także w wielu egzemplarzach.
 - Edycja kabli energii i sterowania, rozgałęzienia, mostki, diagnostyka połączeń.
 - Priorytety energii 1–10, tryby LPM/PPM/pasywny, ustawianie czasu serii i przerw.
@@ -38,3 +38,12 @@ Poprawki po testach użytkownika
 Przycisk „Połącz automatycznie” pozostaje tylko w prototypie i nie trafi do finalnej gry.
 
 Weryfikacja poprawek: 30/30 testów modelu oraz scenariusz UI obejmujący pełny ekran, rozmiary 1440 × 900 / 1152 × 720 / 1680 × 960, podnoszenie klawiaturą i myszą, obrót, anulowanie, nieprawidłowe odłożenie, usuwanie PPM oraz migrację zapisanych skrótów.
+
+Aktualny zakres sieci danych
+- Siatka 18 × 12 pól: większa liczba miejsc, bez powiększania wymiarów modułów.
+- Osobna sieć dowodzenia i cztery osobne sieci systemów: napęd, energia, uzbrojenie, osłony.
+- Sterowniki: wejście danych dowodzenia i niezależne wyjście danych systemu.
+- Odbiorcy tego samego systemu współdzielą sieć; różne systemy mogą krzyżować się na mostkach.
+- Błędne połączenia są blokowane, a nie zapisywane jako niedziałający układ.
+
+Weryfikacja sieci: 38/38 testów modelu. Test interfejsu potwierdza odrzucenie obcej sieci bez zmiany układu, niezależność napędu i broni, połączenie właściwych portów, skrzyżowanie danych na mostku, blokadę usuwania używanego mostka oraz montaż na nowych polach siatki.

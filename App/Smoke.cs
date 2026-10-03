@@ -17,7 +17,8 @@ public partial class Main
             await ToSignal(GetTree().CreateTimer(.3),SceneTreeTimer.SignalName.Timeout);
             await ResizeWindow(new Vector2I(1440,900));
             ShowView("editor");
-            Require(Grid.CellSize>48,"larger ship grid");
+            Require(Layout.Width==18 && Layout.Height==12,"expanded 18 by 12 ship grid");
+            await VerifyDataNetworks();
             await VerifyEditorShortcuts();
             Require(Layout.Modules.Count==9,"nine starter modules");
             Require(Simulation.Status.Values.All(s=>s.Powered),"connected starter");
@@ -29,19 +30,19 @@ public partial class Main
             ResetShip();
             await Click(ButtonPoint("Generator główny"));
             Require(Grid.Pending==ModuleKind.Generator,"catalog button starts placement");
-            await Click(GridPoint(new Cell(10,8)));
+            await Click(GridPoint(new Cell(15,9)));
             Require(Layout.Modules.Count==10,"mouse places module");
             await Click(ButtonPoint("Połącz automatycznie"));
             Require(Simulation.Status.Values.All(s=>s.Powered),"auto-connect added generator");
             await KeyStroke(Key.Delete);Require(Layout.Modules.Count==9,"delete removes selection");
             ResetShip();
             Grid.BeginAdd(ModuleKind.Shield);
-            await Click(GridPoint(new Cell(12,5)));
+            await Click(GridPoint(new Cell(1,9)));
             Require(Layout.Modules.Count==11 && Layout.Modules.Any(m=>m.Kind==ModuleKind.ShieldControl),"shield includes controller");
             await Click(ButtonPoint("Połącz automatycznie"));
             Require(Simulation.Status.Values.All(s=>s.Powered),"shield and controller can be connected");
             Grid.BeginAdd(ModuleKind.Dash);
-            await Click(GridPoint(new Cell(8,8)));
+            await Click(GridPoint(new Cell(8,10)));
             await Click(ButtonPoint("Połącz automatycznie"));
             Require(Simulation.Status.Values.All(s=>s.Powered),"dash connected");
             Grid.Select(Layout.Modules.First(m=>m.Kind==ModuleKind.Shield).Id);
@@ -94,7 +95,7 @@ public partial class Main
             await Capture("08-szeroki-panel");
             ShowView("arena");await Capture("09-szeroka-arena");
             Require(Flight.Bounds.Size.X>1116,"widescreen expands flight area");
-            GD.Print("SMOKE PASS: fullscreen, responsive layout, Q pickup/rotation/cancel, right-click deletion, binding migration, arena, weapons, energy and settings persistence.");
+            GD.Print("SMOKE PASS: 18x12 grid, isolated system networks, wrong-port rejection, data bridges, fullscreen, pickup, weapons, energy and settings persistence.");
             QuitCleanly(0);
         }
         catch(Exception error)
@@ -133,6 +134,62 @@ public partial class Main
         Input.ParseInputEvent(new InputEventMouseMotion { Position=position,GlobalPosition=position });
         await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
     }
+    private Vector2 PortPoint(ShipModule module,WireKind kind)
+    {
+        var port=module.Port(kind);var offset=port.Facing.Offset();
+        return GridPoint(port.Cell)+new Vector2(offset.X,offset.Y)*(Grid.CellSize/2-3);
+    }
+    private async Task Drag(Vector2 start,Vector2 end)
+    {
+        var transform=GetViewport().GetStretchTransform();start=transform*start;end=transform*end;
+        Input.WarpMouse(start);
+        Input.ParseInputEvent(new InputEventMouseMotion { Position=start,GlobalPosition=start });
+        Input.ParseInputEvent(new InputEventMouseButton { Position=start,GlobalPosition=start,ButtonIndex=MouseButton.Left,Pressed=true });
+        await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
+        Input.WarpMouse(end);
+        Input.ParseInputEvent(new InputEventMouseMotion { Position=end,GlobalPosition=end,ButtonMask=MouseButtonMask.Left });
+        await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
+        Input.ParseInputEvent(new InputEventMouseButton { Position=end,GlobalPosition=end,ButtonIndex=MouseButton.Left,Pressed=false });
+        await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
+    }
+    private async Task VerifyDataNetworks()
+    {
+        var engineControl=Layout.Modules.First(m=>m.Kind==ModuleKind.EngineControl);
+        var engine=Layout.Modules.First(m=>m.Kind==ModuleKind.Engine);
+        var blaster=Layout.Modules.First(m=>m.Kind==ModuleKind.Blaster);
+        Require(engineControl.HasPort(WireKind.Control) && engineControl.HasPort(WireKind.EngineData),"controller has separate command and system terminals");
+        SetTool(EditorTool.Control);
+        int revision=Layout.Revision;
+        await Drag(PortPoint(engineControl,WireKind.EngineData),PortPoint(blaster,WireKind.WeaponData));
+        Require(Layout.Revision==revision && _toast.Text.Contains("Niezgodna"),"UI rejects incompatible systems without changing wires");
+        Require(Grid.DataKind==WireKind.EngineData,"drag selects the controller output network");
+        Layout.RemoveWire(engine.Port(WireKind.EngineData).CableCell,WireKind.EngineData);AfterEdit();
+        Require(!Simulation.Status[engine.Id].Powered && Simulation.Status[blaster.Id].Powered,"disconnected engine network leaves weapons operational");
+        await Drag(PortPoint(engineControl,WireKind.EngineData),PortPoint(engine,WireKind.EngineData));
+        Require(Simulation.Status[engine.Id].Powered,"matching system ports reconnect through UI");
+        Grid.Select(engineControl.Id);await Capture("11-sieci-systemow");
+
+        // A bare grid isolates the cable-tool checks from the starter ship's routes.
+        Layout=new ShipLayout();Simulation=new ShipSimulation(Layout);Grid.Cancel();Grid.Select(null);AfterEdit();
+        Grid.SetDataKind(WireKind.EngineData);
+        await Drag(GridPoint(new(2,4)),GridPoint(new(6,4)));
+        Require(Layout.WireAt(new(4,4),WireKind.EngineData)!=null,"manual engine data cable");
+        revision=Layout.Revision;Grid.SetDataKind(WireKind.WeaponData);
+        await Drag(GridPoint(new(4,2)),GridPoint(new(4,6)));
+        Require(Layout.Revision==revision && Layout.WireAt(new(4,4),WireKind.WeaponData)==null,"different data systems cannot merge without bridge");
+        SetTool(EditorTool.Bridge);await Click(GridPoint(new(4,4)));
+        Require(Layout.IsBridge(new(4,4)),"bridge can be placed on data cable");
+        Grid.SetDataKind(WireKind.WeaponData);await Drag(GridPoint(new(4,2)),GridPoint(new(4,6)));
+        Require(Layout.WireAt(new(4,4),WireKind.WeaponData)!=null,"bridge supports separate data systems");
+        SetTool(EditorTool.Bridge);revision=Layout.Revision;await Click(GridPoint(new(4,4)));
+        Require(Layout.Revision==revision && Layout.IsBridge(new(4,4)),"cannot remove bridge and mix different data networks");
+        await Capture("12-mostek-danych");
+        await Click(GridPoint(new(4,4)),MouseButton.Right);
+        Require(!Layout.Wires.Any(w=>w.Cell==new Cell(4,4)) && !Layout.IsBridge(new(4,4)),"PPM removes every data type and bridge at cell");
+        Grid.BeginAdd(ModuleKind.EngineControl);await Click(GridPoint(new(17,11)));
+        Require(Layout.ModuleAt(new(17,11))!=null,"new bottom-right grid cells support placement");
+        SetTool(EditorTool.Select);ResetShip();
+    }
     private async Task VerifyEditorShortcuts()
     {
         var module=Layout.Modules.First(m=>m.Kind==ModuleKind.Blaster);
@@ -149,19 +206,19 @@ public partial class Main
         await Click(GridPoint(new Cell(1,1)),MouseButton.Right);
         Require(!Grid.HasPlacement && Layout.Modules.Count==9,"right click cancels pickup without deleting underlying object");
         await Hover(GridPoint(original));await KeyStroke(Key.Q);await KeyStroke(Key.R);
-        await Hover(GridPoint(new Cell(10,8)));await Capture("10-przenoszenie");
-        await Click(GridPoint(new Cell(10,8)));
+        await Hover(GridPoint(new Cell(15,9)));await Capture("10-przenoszenie");
+        await Click(GridPoint(new Cell(15,9)));
         Require(!Grid.HasPlacement && module.Position!=original && module.Rotation==1,"pickup rotates and places");
         Require(module.Level==2 && module.Priority==7 && module.WeaponMode==WeaponMode.Passive && module.BurstDuration==.6 && module.BurstGap==.8,"move preserves module identity and settings");
         Require(Layout.Wires.Count==wires,"move leaves existing cables intact");
         await Click(GridPoint(module.Position),MouseButton.Right);
         Require(Layout.Find(module.Id)==null,"right click removes module");
         ResetShip();
-        Require(Layout.TryDrawWire(WireKind.Power,new[] { new Cell(2,9),new Cell(3,9),new Cell(4,9) }).Success,"setup cable");
-        Require(Layout.TryDrawWire(WireKind.Control,new[] { new Cell(3,8),new Cell(3,9) },true).Success,"setup mixed bridge");
-        await Click(GridPoint(new Cell(3,9)),MouseButton.Right);
-        Require(Layout.WireAt(new(3,9),WireKind.Power)==null && Layout.WireAt(new(3,9),WireKind.Control)==null && !Layout.IsBridge(new(3,9)),"right click removes both cables and bridge");
-        Require(Layout.WireAt(new(2,9),WireKind.Power)!=null,"right click only removes hovered cable tile");
+        Require(Layout.TryDrawWire(WireKind.Power,new[] { new Cell(2,10),new Cell(3,10),new Cell(4,10) }).Success,"setup cable");
+        Require(Layout.TryDrawWire(WireKind.Control,new[] { new Cell(3,9),new Cell(3,10) },true).Success,"setup mixed bridge");
+        await Click(GridPoint(new Cell(3,10)),MouseButton.Right);
+        Require(Layout.WireAt(new(3,10),WireKind.Power)==null && Layout.WireAt(new(3,10),WireKind.Control)==null && !Layout.IsBridge(new(3,10)),"right click removes both cables and bridge");
+        Require(Layout.WireAt(new(2,10),WireKind.Power)!=null,"right click only removes hovered cable tile");
         SetTool(EditorTool.Power);
         await Click(GridPoint(new Cell(1,1)),MouseButton.Right);
         Require(Layout.Modules.Count==8,"right click deletes in cable tool");
