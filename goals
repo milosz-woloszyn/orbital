@@ -9,29 +9,40 @@ Etap 0 — przygotowanie
 [x] Uzgodnić grafikę: użytkownik zaakceptował wszystkie dotychczasowe plansze i styl pixel art.
 [x] Ustalić formę gry: aplikacja na komputer.
 [x] Ustalić sterowanie: klawiatura i mysz, ręczne celowanie, ruch po całym ekranie, LPM/PPM.
-[x] Ustalić pauzę po awansie, wydawanie EXP kosztem postępu poziomu i utratę całego postępu po śmierci.
+[x] Ustalić pauzę po awansie i utratę całego postępu po śmierci.
+[x] Ustalić automatyczne nagrody, trzy losowe oferty sklepu i jedno ulepszenie na awans, przepadające po zamknięciu panelu z potwierdzeniem.
+[x] Ustalić pięć typów przeciwników, ciągły wzrost trudności, pięć dodatkowych broni i rozrost siatki co 5 poziomów.
 [x] Ustalić główne zasady energii, priorytetów, kabli, sterowników, napędu, broni i osłon.
 [x] Zatwierdzić technologię prototypu: Godot 4 .NET + C#, Linux x86_64.
 [x] Doprecyzować tryby broni, detonację rakiet, mostki kablowe, remisy priorytetów, powrót zasilania, zryw i znaczenie wskaźników energii.
-[ ] Doprecyzować rozliczanie EXP oraz pozostałe parametry wymienione w assumptions.
+[ ] Potwierdzić koszt jednego ulepszenia na awans: darmowe czy za EXP; w drugim przypadku doprecyzować rozliczanie EXP. Pozostałe parametry są wymienione w assumptions.
 
 Etap 1 — prototyp walki
 [ ] Statek startujący w dolnej części ekranu, ruch po całym ekranie, klawiatura i mysz oraz ręczne celowanie.
 [ ] Blaster: pojedynczy pocisk po naciśnięciu i powtarzany ostrzał podczas przytrzymania, zgodnie z podstawowym czasem odnowienia.
-[ ] Przeciwnicy nadciągający spoza mapy i różne zachowania.
+[ ] Ciągły napływ przeciwników spoza mapy, stopniowo rosnąca z czasem trudność, bez oddzielnych fal; parametry robocze.
+[ ] Basic lecący ku graczowi i strzelający podstawowym blasterem.
+[ ] Przeciwnik latający horyzontalnie i strzelający wachlarzem pocisków.
+[ ] Rakietowiec celujący w przewidzianą przyszłą pozycję gracza; rakieta leci do ustalonego punktu i detonuje obszarowo po dotarciu.
+[ ] Statek macierzysty z orbitującymi minionami strzelającymi we wszystkich kierunkach; miniony można niszczyć osobno, a śmierć statku macierzystego zabija pozostałe.
+[ ] Przeciwnik strzelający pociskami zataczającymi małe pętle i jednocześnie przesuwającymi się ku graczowi.
 [ ] Wzory ostrzału, kolizje i obrażenia.
 [ ] Nieskończona rozgrywka do śmierci; restart bez zachowania materiałów, EXP, poziomów, zakupionych modułów i ulepszeń.
-[ ] Nagrody: materiały i EXP.
+[ ] Automatyczne przyznawanie EXP i materiałów po śmierci każdego przeciwnika, także minionów ginących wraz ze statkiem macierzystym; bez zbierania przedmiotów.
+[ ] Jeden zasób materiałów/kasy; pasek postępu poziomu i licznik zasobu na HUD.
 
 Etap 2 — panel i konfiguracja statku
 [ ] Awans automatycznie otwiera panel zarządzania i sklep oraz zatrzymuje walkę; zamknięcie wznawia rozgrywkę.
-[ ] Kwadratowa siatka z modułami różnych rozmiarów, obracaniem i możliwością przyszłego powiększania po wybranych awansach.
+[ ] Siatka początkowa 18 × 12 kwadratowych pól z modułami różnych rozmiarów i obracaniem; +2 kolumny i +2 wiersze na poziomach 5, 10, 15 itd.
+[ ] Przewijanie zbyt dużej siatki w obu osiach po zbliżeniu kursora do krawędzi panelu.
 [ ] Rozmieszczenie modułów niezależne od wyglądu statku; brak oddzielnego trafiania w moduły.
 [ ] Kable zasilania i sterowania: rozgałęzienia, skrzyżowania, wiele kabli właściwego typu w złączu, zajmowanie pól siatki, brak tras pod modułami i brak kosztu materiałowego.
 [ ] Automatyczne połączenia na skrzyżowaniach kabli tego samego typu; mostki umożliwiające przejście nad innym kablem bez połączenia.
 [ ] Dowodzenie połączone z każdym sterownikiem; sygnał nie przechodzi przez inne moduły. Podzespoły połączone z właściwymi sterownikami, z wyjątkiem niezależnego generatora głównego.
 [ ] Potwierdzony zestaw początkowy: generator główny, jedna bateria, silniki, dowodzenie, sterowanie silnikami, zasilaniem i uzbrojeniem, blaster oraz rakieta.
-[ ] Zakup modułów za materiały i ulepszenia za EXP zmniejszający postęp poziomu.
+[ ] Sklep na każdy awans losuje maksymalnie 3 nowe oferty z puli modułów, po jednym egzemplarzu na ofertę; powtórki i posiadane moduły są dozwolone, można kupić wszystkie oferty za materiały.
+[ ] Jedno ulepszenie modułu na awans; niewykorzystane przepada po zamknięciu panelu. Koszt według przyszłego potwierdzenia w assumptions.
+[ ] Dodatkowe potwierdzenie zamknięcia panelu przy niewykorzystanym ulepszeniu; anulowanie zachowuje otwarty panel i możliwość ulepszenia.
 [ ] Przypisanie najwyżej jednej broni do LPM i jednej do PPM; przełączanie broni tylko w panelu po awansie.
 
 Etap 3 — energia i zależności modułów
@@ -49,11 +60,16 @@ Etap 4 — rozwinięcie napędu i walki
 [ ] Dodatkowe silniki zwiększające prędkość, dryf bez sterowania silnikami.
 [ ] Zryw w kierunku wskazanym klawiszami, a przy braku kierunku w stronę kursora; obsługiwany przez sterownik silników, za energię, bez odnowienia i bez odporności na obrażenia; brak możliwości rozpoczęcia kolejnego przed końcem bieżącego.
 [ ] Każda broń może działać aktywnie lub pasywnie. Pasywna seria działa jak przytrzymanie przycisku i respektuje podstawowe tempo strzałów; czas serii zero oznacza ciągły ostrzał.
-[ ] Pasywne serie celowane w kursor: czas serii i przerwy ustawiane bez narzuconych ograniczeń, przerwa liczona od końca skończonej serii, restart cyklu po odzyskaniu zasilania.
+[ ] Pasywne serie z celowaniem właściwym dla rodzaju broni: czas serii i przerwy ustawiane bez narzuconych ograniczeń, przerwa liczona od końca skończonej serii, restart cyklu po odzyskaniu zasilania.
 [ ] Rakieta zapamiętująca punkt kursora przy wystrzale, detonacja po trafieniu przeciwnika lub po dotarciu do celu i obrażenia dla wszystkich przeciwników w zasięgu.
 [ ] Osobny sterownik otrzymywany wraz z modułem osłon; ładowanie osłon za energię również podczas otrzymywania obrażeń, osłony przed życiem, nadmiar obrażeń przechodzi na życie.
 [ ] Generator awaryjny, generator sprzężenia zwrotnego, silniki zrywu i osłony dostępne wyłącznie przez zakup.
-[ ] Dalsze szczegóły modułów, broni i przeciwników według danych użytkownika.
+[ ] Rakieta od statku stale podążająca za aktualnym kursorem; wybuch po trafieniu przeciwnika albo dotarciu do kursora.
+[ ] Laser z ciągłą wiązką aktualizującą kierunek kursora i rażącą wszystkich przeciwników na linii strzału.
+[ ] Blaster wachlarzowy ze środkiem wachlarza skierowanym ku kursorowi.
+[ ] Nieruchoma bomba stawiana w pozycji gracza, detonująca po krótkim czasie i raniąca wyłącznie przeciwników.
+[ ] Pocisk samonaprowadzający na najbliższego przeciwnika, wyszukujący kolejnego po śmierci celu; doprecyzować zachowanie przy braku celów.
+[ ] Dobrać robocze parametry modułów, broni, nagród i przeciwników do testów walki.
 
 Etap 5 — przygotowanie gry
 [ ] Dopasować zaakceptowane grafiki do wybranego silnika i docelowych rozmiarów modułów.
@@ -66,3 +82,11 @@ Kolejność jest propozycją realizacji. Zaznaczone ustalenia oznaczają decyzje
 Ustalenie interfejsu docelowego: nie udostępniać przycisku „Połącz automatycznie”. W laboratorium semi_goal pozostaje on narzędziem testowym.
 
 Doprecyzowanie kabli danych: osobna sieć dowodzenia oraz oddzielne sieci napędu, energii, uzbrojenia i osłon; sterowniki mają oddzielne wejście i wyjście. Mieszanie różnych sieci jest blokowane, skrzyżowania przez mostki pozostają dostępne. Prototyp używa siatki 18 × 12 pól.
+
+Przeniesienie wersji testowej do gry docelowej
+[ ] Zachować wszystkie poprawki funkcjonalne i interfejsowe prototypu, w tym pełny ekran, brak zewnętrznych marginesów, większą arenę i siatkę oraz boczne panele.
+[ ] Zachować usuwanie PPM, podnoszenie Q, odkładanie LPM, obrót R i anulowanie Esc/PPM, bez utraty ustawień modułu; konfigurowalne skróty i zapis ustawień sterowania/audio.
+[ ] Zachować rozdzielone sieci danych, osobne wejścia i wyjścia sterowników, kolory kabli, mostki oraz odrzucanie nieprawidłowych połączeń.
+[ ] Zintegrować te poprawki z ekonomią i awansami. Testowe darmowe zakupy i nieograniczone ulepszenia nie zastępują docelowych reguł. Zgodnie z wcześniejszym ustaleniem usunąć przycisk „Połącz automatycznie” z finalnej gry.
+
+Nowe pozycje dotyczą przyszłej implementacji. Aktualizacja assumptions i goals nie oznacza zmiany kodu ani gotowej aplikacji.

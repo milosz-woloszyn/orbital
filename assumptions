@@ -5,19 +5,32 @@ Status: wstępny projekt z uwzględnieniem decyzji użytkownika.
 Gra typu bullet hell w kosmosie. Mały statek gracza rozpoczyna w dolnej części ekranu, ale może poruszać się po całym ekranie. Przedziera się przez hordy przeciwników oraz bardzo liczne pociski.
 Przeciwnicy to statki nadciągające spoza mapy, próbujące zniszczyć statek gracza. Różnią się sposobem poruszania, zachowania i ostrzału.
 Docelowo gracz korzysta z różnych rodzajów uzbrojenia. Na start gracz otrzymuje podstawowy blaster (proste działko) oraz podstawową rakietę. Obie bronie są celowane w miejsce kursora. Potwierdzenie startowej rakiety zastępuje wcześniejsze założenie o samym blasterze.
-Sterowanie: klawiatura i mysz, celowanie ręczne. Uzbrojenie aktywne korzysta z LPM/PPM i celuje w miejsce kursora. Naciśnięcie wystrzeliwuje jeden pocisk, a przytrzymanie utrzymuje ostrzał z podstawowym czasem odnowienia danej broni. Pozostałe klawisze wymagają przypisania.
+Sterowanie: klawiatura i mysz. Uzbrojenie aktywne korzysta z LPM/PPM; broń kierunkowa jest celowana ręcznie kursorem. Sposób ataku zależy od broni: pojedynczy pocisk, wachlarz, ciągła wiązka, bomba albo pocisk samonaprowadzający. Przytrzymanie utrzymuje działanie zgodnie z podstawowym tempem broni. Wyjątki od celowania kursorem opisano w punkcie 3.6. Przypisania sterowania są konfigurowalne.
+
+1.1. Przeciwnicy i napływ
+Przeciwnicy nadciągają spoza mapy w sposób ciągły, bez podziału na oddzielne fale. Trudność stopniowo wzrasta z czasem rozgrywki. Tempo pojawiania się, proporcje typów, liczba jednostek, ich statystyki i skalowanie trudności pozostają parametrami roboczymi.
+Potwierdzone typy przeciwników:
+- Basic: leci w kierunku gracza i strzela w niego podstawowym blasterem.
+- Strzelec poziomy: lata horyzontalnie i wystrzeliwuje wachlarz pocisków.
+- Rakietowiec: przewiduje przyszłą pozycję gracza. Rakieta leci do punktu ustalonego przy wystrzale i po dotarciu wybucha, zadając obrażenia obszarowe.
+- Statek z eskortą: wokół statku macierzystego orbituje kilka małych statków strzelających we wszystkich kierunkach. Miniony można niszczyć osobno. Zniszczenie jednostki macierzystej zabija wszystkie pozostałe miniony; również wtedy każdy z nich daje własne nagrody.
+- Strzelec pocisków zapętlonych: jego pociski zataczają małe kółka i jednocześnie przemieszczają się w kierunku gracza.
+Każdy zniszczony przeciwnik, w tym minion, daje EXP i materiały zgodnie z punktem 2. Konkretne wartości nagród i parametry ataków są robocze.
 
 2. Nagrody i rozwój
-Zniszczeni przeciwnicy dają materiały i doświadczenie (EXP).
-Po każdym zdobyciu pełnego poziomu automatycznie otwiera się panel zarządzania statkiem i sklep, a walka zostaje zatrzymana na czas korzystania z panelu.
-Za materiały gracz kupuje nowe moduły.
-Za EXP gracz ulepsza już posiadane moduły. Wydawanie EXP na ulepszenia zmniejsza postęp poziomu; EXP nie jest osobnym saldem niezależnym od postępu.
-Do ustalenia: progi poziomów, ceny, sposób zbierania nagród oraz dokładne rozliczanie EXP po awansie, w tym możliwość obniżenia zdobytego poziomu i zasady ponownego osiągania tego samego progu.
+EXP i materiały są przyznawane automatycznie po zabiciu przeciwnika; nie wymagają zbierania przedmiotów na arenie. „Kasa”, „pieniądze” i „materiały” oznaczają ten sam zasób, a nie osobne waluty.
+HUD pokazuje pasek postępu do kolejnego poziomu oraz licznik posiadanych materiałów/kasy, obok dotychczasowych wskaźników statku.
+Po każdym awansie automatycznie otwiera się panel zarządzania statkiem ze sklepem, a walka zostaje zatrzymana na czas korzystania z panelu.
+Sklep na każdy awans losuje nowy zestaw maksymalnie trzech ofert z puli modułów. Każda oferta pozwala kupić jeden egzemplarz za materiały. Można kupić wszystkie trzy oferty, jeśli wystarczy środków. Losowanie dopuszcza powtórki oraz moduły już posiadane przez gracza.
+Po każdym awansie gracz może ulepszyć jeden moduł. Niewykorzystana możliwość ulepszenia przepada przy zamknięciu panelu i nie przechodzi na kolejny awans.
+Próba zamknięcia panelu z niewykorzystanym ulepszeniem wymaga dodatkowego potwierdzenia utraty tej możliwości. Anulowanie potwierdzenia pozostawia panel otwarty; potwierdzone zamknięcie wznawia walkę.
+Koszt tego jednego ulepszenia wymaga jeszcze potwierdzenia: wcześniejsze założenie przewidywało wydatek EXP zmniejszający postęp poziomu, natomiast najnowsza odpowiedź ustala limit jednego ulepszenia i jego przepadanie, ale nie rozstrzyga, czy ulepszenie jest darmowe. Nie przyjmujemy nowego kosztu ani darmowości jako potwierdzonej reguły.
+Progi poziomów, ceny, wartości nagród, efekty ulepszeń i szczegółowy balans pozostają robocze. Jeśli utrzymany zostanie koszt EXP, należy doprecyzować rozliczanie go po awansie, możliwość obniżenia poziomu i ponownego osiągania tego samego progu.
 
 3. Budowa statku i mechanika modułów
 3.1. Siatka, złącza i kable
 Panel zarządzania statkiem zawiera siatkę kwadratowych pól. Moduły mają różne wymiary i można je obracać.
-W przyszłości po awansie na niektóre poziomy będzie można powiększać siatkę.
+Początkowa siatka ma 18 × 12 pól, zgodnie z poprawką z wersji testowej przenoszoną do gry docelowej. Zwiększa się o 2 kolumny i 2 wiersze co 5 poziomów, pierwszy raz na poziomie 5, następnie 10, 15 itd. Jeśli nie mieści się w panelu, przesuwa się widok po zbliżeniu kursora do odpowiedniej krawędzi; przewijanie działa poziomo i pionowo. Nie zmniejszamy pól bez końca, aby zmieścić rozrastający się układ.
 Rozmieszczenie modułów nie zmienia wyglądu statku. Nie można trafić ani uszkodzić modułów oddzielnie.
 Każdy moduł ma złącze zasilania na jednej ze ścianek. Złącza sterowania służą do przyłączania kabli sterowania.
 Do pojedynczego złącza można przyłączyć wiele kabli, ale wyłącznie kabli właściwego, jednakowego typu.
@@ -73,14 +86,14 @@ Dostępne od początku są: moduł dowodzenia, sterownik silników, sterownik za
 Wszystkie moduły sterowania pobierają energię tylko podczas działania odpowiadających im podzespołów.
 
 Uzbrojenie aktywne:
-- Jest obsługiwane LPM i PPM, celuje w miejsce kursora.
-- Pojedyncze naciśnięcie wystrzeliwuje jeden pocisk, z uwzględnieniem gotowości broni.
-- Przytrzymanie utrzymuje strumień pocisków z częstotliwością wynikającą z podstawowego czasu odnowienia broni.
+- Jest obsługiwane LPM i PPM. Kierunek lub cel zależy od rodzaju broni opisanego w punkcie 3.6.
+- Pojedyncze naciśnięcie uruchamia atak z uwzględnieniem gotowości broni: dla podstawowego blastera i rakiety jest to jeden pocisk, dla blastera wachlarzowego cały wachlarz.
+- Przytrzymanie utrzymuje działanie zgodnie z charakterem broni i jej podstawowym tempem; laser emituje ciągłą wiązkę.
 - Do każdego przycisku może być przypisana tylko jedna broń naraz.
 - Bronie można przełączać wyłącznie w panelu statku otwieranym po awansie na poziom.
 
 Uzbrojenie pasywne:
-- Automatycznie strzela w miejsce kursora przez czas serii ustawiony przez gracza. Seria działa jak przytrzymanie przycisku strzału: zachowuje podstawową częstotliwość strzelania danej broni.
+- Automatycznie uruchamia broń przez czas serii ustawiony przez gracza. Sposób celowania jest właściwy dla danej broni, zgodnie z punktem 3.6. Seria działa jak przytrzymanie przycisku strzału: zachowuje podstawowe tempo działania danej broni.
 - Dla serii o dodatnim czasie trwania po jej zakończeniu rozpoczyna odliczanie ustawionego przez gracza czasu odnowienia, a następnie rozpoczyna następną serię.
 - Czas serii równy zero oznacza ciągłe strzelanie, a nie brak strzałów. Nadal obowiązuje podstawowy odstęp między wystrzałami danej broni.
 - Ustawienia czasu serii i czasu odnowienia nie mają narzuconych ograniczeń.
@@ -92,7 +105,13 @@ Każdą broń można ustawić jako aktywną lub pasywną. Zmian dokonuje się w 
 - Podstawowa rakieta: wystrzeliwana pojedynczo, zapamiętuje miejsce kursora w chwili wystrzału. Wybucha po trafieniu przeciwnika; eksplozja rani wszystkich przeciwników w zasięgu.
 Jeśli rakieta wcześniej nie trafi przeciwnika, wybucha po dotarciu do zapamiętanego punktu kursora.
 Podstawowa rakieta jest dostępna od początku razem z blasterem, zgodnie z dodatkowym potwierdzeniem użytkownika.
-Parametry broni pozostają do ustalenia.
+Dodatkowe bronie (nie zmieniają potwierdzonego zestawu początkowego):
+- Rakieta sterowana kursorem: startuje ze statku i podczas całego lotu skręca w stronę bieżącej pozycji kursora. Wybucha po trafieniu przeciwnika lub po dotarciu do kursora; eksplozja rani przeciwników w zasięgu.
+- Laser: emituje ciągłą wiązkę od statku w kierunku kursora i na bieżąco aktualizuje kierunek. Atakuje wszystkich przeciwników na linii strzału, bez zatrzymywania się na pierwszym.
+- Blaster wachlarzowy: wystrzeliwuje wachlarz pocisków, którego środek jest skierowany w stronę kursora.
+- Bomba: zostaje w miejscu, w którym znajdował się gracz przy jej postawieniu, i wybucha po krótkim czasie. Jest nieruchoma i rani wyłącznie przeciwników.
+- Pocisk samonaprowadzający: wybiera najbliższego przeciwnika i naprowadza się na niego podczas lotu. Jeśli cel zginie, wyszukuje kolejnego przeciwnika.
+Parametry broni, w tym obrażenia, koszt energii, tempo ostrzału, zasięg i czasy działania, pozostają robocze. Zachowanie pocisku samonaprowadzającego przy braku jakiegokolwiek celu wymaga ustalenia.
 
 3.7. Osłony
 Moduł osłon jest wyłącznie do kupienia i wymaga sterownika osłon, otrzymywanego wraz z tym modułem.
@@ -133,9 +152,10 @@ Poprzednie pytania o tryby broni, rakiety, skrzyżowania kabli, remisy priorytet
 
 Do ustalenia w kolejnych etapach:
 - Ewentualne dalsze platformy i docelowe warianty interfejsu poza zatwierdzonym prototypem Linux.
-- Dokładne rozliczanie wydawanego EXP względem poziomów, progi awansu, ceny, sposób zbierania nagród i ewentualny zapis trwającej rozgrywki.
-- Wymiary siatki i modułów, rozmieszczenie portów, poziomy rozszerzające siatkę oraz szczegółowe parametry mostka kablowego i ewentualne limity długości/przepustowości kabli.
+- Koszt jednego ulepszenia po awansie (darmowe czy za EXP); jeśli pozostanie koszt EXP, jego dokładne rozliczanie względem poziomów. Progi awansu, ceny, nagrody i ewentualny zapis trwającej rozgrywki.
+- Docelowe wymiary modułów, rozmieszczenie portów oraz szczegółowe parametry mostka i ewentualne limity długości/przepustowości kabli. Początkowa siatka ma 18 × 12 pól. Przyrost +2 kolumny i +2 wiersze co 5 poziomów jest ustalony.
 - Wartości produkcji, pojemności i zużycia energii; parametry ruchu, uzbrojenia, osłon, ulepszeń i przeciwników.
+- Zachowanie pocisku samonaprowadzającego, gdy brak celu, oraz szczegółowy balans pięciu typów przeciwników i pięciu dodatkowych broni.
 - Dokładne skalowanie żółtego wskaźnika zużycia energii na sekundę względem prezentacji zielonego zapasu baterii.
 
 Powyższe szczegóły nie zmieniają już potwierdzonych zasad. Parametry użyte w prototypie są robocze.
@@ -155,3 +175,8 @@ Rozwój kodu odbywa się z użyciem Gita i commitów spójnych etapów. Wymienio
 Aktualizacja interfejsu semi_goal: większa arena i siatka statku, bez zewnętrznych marginesów. PPM usuwa moduł lub kable i mostek ze wskazanego pola bez potwierdzenia. Q podnosi moduł spod kursora; LPM odkłada, R obraca, Esc lub PPM anuluje i zachowuje poprzednie położenie. Podczas przenoszenia PPM nie usuwa obiektu spod kursora. Przeniesienie zachowuje ID, ulepszenia, priorytet i ustawienia broni; kable pozostają na swoich polach. Skrót podnoszenia można zmienić w ustawieniach.
 
 Aktualizacja sieci: siatka prototypu ma 18 × 12 pól (216 zamiast 160). Oddzielne sieci danych mają osobne kolory i wybór typu kabla w panelu. Rozpoczęcie rysowania na module wybiera najbliższe złącze danych. Błędne połączenia oraz usunięcie mostka mieszające różne sieci są odrzucane.
+
+9. Przeniesienie poprawek prototypu do docelowej gry
+Wszystkie poprawki funkcjonalne i interfejsowe wypracowane w wersji testowej mają znaleźć się w docelowej grze. Dotyczy to pełnego ekranu, wykorzystania przestrzeni bez zewnętrznych marginesów, większej areny i siatki, edycji przez PPM oraz Q/LPM/R/Esc, zachowywania ustawień przenoszonego modułu, konfigurowalnego sterowania i audio, a także oddzielnych sieci danych z diagnostyką oraz mostkami.
+Rozwiązania testowe opisane w punkcie 8 nie zastępują reguł rozgrywki docelowej: zakupów i limitu ulepszeń po awansie, nagród za walkę oraz końca rozgrywki po śmierci. Obowiązuje wcześniej uzgodniony wyjątek: przycisku „Połącz automatycznie” nie będzie w finalnej wersji.
+Nowe ustalenia o przeciwnikach, ekonomii, rozwoju siatki i broniach stanowią zakres przyszłej implementacji. Ich zapis w tym dokumencie nie oznacza, że zostały już dodane do działającej aplikacji.
