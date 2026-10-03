@@ -9,6 +9,7 @@ public sealed class Sound
     private readonly Dictionary<string,AudioStreamWav> _effects=new();
     private readonly Bindings _settings;
     private int _next;
+    private bool _stopped;
     public Sound(Node parent,Bindings settings)
     {
         _settings=settings;
@@ -25,6 +26,7 @@ public sealed class Sound
     }
     public void PlayMusic()
     {
+        if(_stopped)return;
         _music.Stop();
         var path=_settings.MusicTrack==0?"res://orbital_assault_138bpm.wav":"res://orbital_overdrive_150bpm.wav";
         var wav=GD.Load<AudioStreamWav>(path);
@@ -38,13 +40,14 @@ public sealed class Sound
     }
     public void Play(string key,float strength=1)
     {
-        if(_settings.EffectsVolume<=0) return;
+        if(_stopped || _settings.EffectsVolume<=0) return;
         var voice=_voices[_next++ % _voices.Length]; voice.Stop(); voice.Stream=_effects[key];
         voice.VolumeDb=Mathf.LinearToDb(Math.Max(.001f,_settings.EffectsVolume*strength))-13;
         voice.Play();
     }
     public void Stop()
     {
+        _stopped=true;
         _music.Stop(); _music.Stream=null;
         foreach(var voice in _voices) { voice.Stop();voice.Stream=null; }
     }

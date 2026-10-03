@@ -79,6 +79,7 @@ public partial class ShipGrid : Control
             }
             if(Pending is { } kind)
             {
+                string addedMessage="Moduł dodany. Podłącz port energii i port sterowania.";
                 var result=Layout().TryAdd(kind,_hover,out var added,PlacementRotation);
                 if(result.Success)
                 {
@@ -89,10 +90,10 @@ public partial class ShipGrid : Control
                         bool placed=false;
                         for(int y=1;y<9 && !placed;y++) for(int x=0;x<16 && !placed;x++)
                             placed=Layout().TryAdd(ModuleKind.ShieldControl,new(x,y),out _).Success;
-                        if(!placed) Edited?.Invoke("Brak miejsca na sterownik osłon. Dodaj go z katalogu po zwolnieniu pola.");
+                        if(!placed) addedMessage="Osłona dodana, ale brak miejsca na jej sterownik. Zwolnij pole i dodaj go z katalogu.";
                     }
                 }
-                Report(result,"Moduł dodany. Podłącz port energii i port sterowania."); return;
+                Report(result,addedMessage); return;
             }
             var picked=Layout().ModuleAt(_hover); Select(picked?.Id);
             _dragId=picked?.Id; _pressPosition=mouse.Position;
@@ -175,9 +176,12 @@ public partial class ShipGrid : Control
             DrawStyleBox(Style.Box(new Color("1b2c3b"),color,module.Id==SelectedId?2:1),rect);
             var inner=rect.Grow(-5);
             var icon=Art.Icon(module.Kind);
-            float scale=Math.Min(inner.Size.X/icon.GetWidth(),inner.Size.Y/icon.GetHeight());
+            bool turned=module.Rotation%2!=0;
+            float scale=Math.Min(inner.Size.X/(turned?icon.GetHeight():icon.GetWidth()),inner.Size.Y/(turned?icon.GetWidth():icon.GetHeight()));
             var imageSize=icon.GetSize()*scale;
-            DrawTextureRect(icon,new Rect2(inner.GetCenter()-imageSize/2,imageSize),false,new Color(1,1,1,.95f));
+            DrawSetTransform(inner.GetCenter(),module.Rotation*Mathf.Pi/2);
+            DrawTextureRect(icon,new Rect2(-imageSize/2,imageSize),false,new Color(1,1,1,.95f));
+            DrawSetTransform(Vector2.Zero);
             // Controller badge distinguishes it from the shield emitter artwork.
             if(module.Definition.IsController)
             {

@@ -18,7 +18,7 @@ public sealed class Bindings
     ];
     public float MusicVolume { get; set; } = .28f;
     public float EffectsVolume { get; set; } = .5f;
-    public int MusicTrack { get; set; }
+    public int MusicTrack { get; set; } = 1;
     public string SaveError { get; private set; } = "";
 
     public Bindings(bool load = true)
@@ -82,7 +82,7 @@ public sealed class Bindings
         }
         MusicVolume=Math.Clamp((float)file.GetValue("audio","music",.28f),0,1);
         EffectsVolume=Math.Clamp((float)file.GetValue("audio","effects",.5f),0,1);
-        MusicTrack=Math.Clamp((int)file.GetValue("audio","track",0),0,1);
+        MusicTrack=Math.Clamp((int)file.GetValue("audio","track",1),0,1);
     }
     public void Save()
     {

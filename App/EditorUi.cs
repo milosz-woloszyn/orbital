@@ -139,7 +139,9 @@ public partial class Main
         Style.Button(_inspector,"Obróć  R",20,384,122,40,()=>{ Grid.RotateSelection();AfterEdit(); });
         Style.Button(_inspector,"Usuń",152,384,122,40,()=>{ Grid.RemoveSelection();AfterEdit(); });
         string distance=status is { SourceDistance:<int.MaxValue }?$"{status.SourceDistance} pól kabla":"brak trasy";
-        Style.Label(_inspector,$"WYMIARY {module.Width} × {module.Height}    ID {id:00}\nŹRÓDŁO: {distance}",20,443,254,46,11,Style.Muted,true);
+        string summary=$"WYMIARY {module.Width} × {module.Height}    ID {id:00}\nŹRÓDŁO: {distance}";
+        if(module.Definition.IsWeapon) summary+=$"\n{module.Definition.Damage*module.UpgradeFactor:0} DMG / {module.Definition.ShotInterval:0.##}s / {module.Definition.ShotEnergy:0.#} E";
+        Style.Label(_inspector,summary,20,440,254,57,11,Style.Muted,true);
         if(module.Definition.IsWeapon)
         {
             Style.Label(_inspector,"Przypisanie broni",20,506,254,25,14);

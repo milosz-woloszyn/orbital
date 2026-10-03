@@ -64,6 +64,8 @@ public partial class Main
             Simulation.Repair();Require(Simulation.Hull==100,"repair");
             Simulation.SetEnergy(0);Simulation.Refill();Require(Simulation.Energy==Simulation.Capacity,"refill");
             ShowView("settings");await Capture("03-ustawienia");
+            Controls.MusicTrack=1;_audio.PlayMusic();
+            Controls.MusicTrack=0;_audio.PlayMusic();
             await Click(new Vector2(683,469));Require(_capture=="dash","binding button enters capture");
             await KeyStroke(Key.Q);Require(Controls.Name("dash")=="Q" && _capture==null,"rebind accepts key through UI");
             Require(!Controls.Rebind("up",new InputEventKey { PhysicalKeycode=Key.Q,Pressed=true },out _),"duplicate binding rejected");
@@ -77,6 +79,8 @@ public partial class Main
             await ToSignal(GetTree().CreateTimer(.3),SceneTreeTimer.SignalName.Timeout);
             Require(Simulation.Energy==energy,"editor pauses simulation");
             ResetShip();Require(Layout.Modules.Count==9,"reset starter");
+            GetWindow().Size=new Vector2I(1152,720);
+            await Capture("07-mniejsze-okno");
             GD.Print("SMOKE PASS: arena, rockets, paused editor, inspector, damage, repair, energy, remapping and settings persistence.");
             QuitCleanly(0);
         }

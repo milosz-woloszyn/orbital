@@ -20,6 +20,7 @@ public partial class Main : Control
     public bool IsPaused=>_view!="arena";
     public string CurrentView=>_view;
     private bool _smoke;
+    private bool _quitting;
 
     public override void _Ready()
     {
@@ -39,9 +40,11 @@ public partial class Main : Control
     { if(what==NotificationWMCloseRequest)QuitCleanly(); }
     private async void QuitCleanly(int code=0)
     {
+        if(_quitting)return;
+        _quitting=true;_view="quitting";
         _audio.Stop();
-        await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
-        await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
+        // Audio playback is released by its mixing thread, not by rendered-frame count.
+        await ToSignal(GetTree().CreateTimer(.2),SceneTreeTimer.SignalName.Timeout);
         GetTree().Quit(code);
     }
     private Control Screen()
@@ -124,7 +127,10 @@ public partial class Main : Control
     public void Toast(string text)
     { if(_toast==null)return; _toast.Text=text;_toastTime=5; }
     public void AfterEdit()
-    { Simulation.Refresh();UpdateInspector();Grid.QueueRedraw();UpdateEditorStats(); }
+    {
+        Simulation.Refresh();UpdateInspector();Grid.QueueRedraw();UpdateEditorStats();
+        if(Grid.Pending==null)SetTool(Grid.Tool);
+    }
     public override void _Process(double delta)
     {
         if(_arenaView==null)return;
