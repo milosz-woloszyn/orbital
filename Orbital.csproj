@@ -1,0 +1,13 @@
+<Project Sdk="Godot.NET.Sdk/4.5.2">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Orbital</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Domain/**/*.cs;Tests/**/*.cs;.tools/**/*.cs;build/**/*.cs" />
+    <ProjectReference Include="Domain/Orbital.Domain.csproj" />
+  </ItemGroup>
+</Project>
