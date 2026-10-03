@@ -114,25 +114,37 @@ Nowe podpisane plansze modułów, kabli i HUD znajdują się w graphics/moduly-v
 Akceptacja stylu nie ustala ostatecznej listy jednostek, modułów ani ich mechanik; potwierdzone zasady są opisane w punkcie 3.
 
 5. Platforma i przebieg rozgrywki
-Gra ma działać jako aplikacja na komputer. Użytkownik nie ma preferowanego silnika; wybór technologii i obsługiwanych systemów operacyjnych pozostaje otwarty.
-Propozycja technologiczna do rozważenia: Godot 4 w wersji .NET oraz C# do logiki gry. To rekomendacja, nie zatwierdzony wybór ani rozpoczęcie implementacji. Uzasadnienie: narzędzia 2D i interfejsu do pixel artu, panelu siatki i HUD; C# do rozbudowanej logiki modułów, sieci i pocisków. Wydajność gęstego ostrzału trzeba zweryfikować pomiarami prototypu.
+Gra działa jako aplikacja na Linux x86_64. Użytkownik zatwierdził Godot 4 .NET + C# do realizacji wersji testowej.
+Zatwierdzona technologia: Godot 4 w wersji .NET oraz C# do logiki gry. Wersja testowa używa Godota 4.5.2 .NET i SDK .NET 8. Uzasadnienie: narzędzia 2D i interfejsu do pixel artu, panelu siatki i HUD; C# do rozbudowanej logiki modułów, sieci i pocisków. Wydajność gęstego ostrzału trzeba zweryfikować pomiarami prototypu.
 Dokumentacja: https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/index.html ; https://docs.godotengine.org/en/stable/tutorials/2d/introduction_to_2d.html ; https://docs.godotengine.org/en/stable/tutorials/ui/index.html
 Rozgrywka jest nieskończona i trwa do śmierci gracza.
 Po śmierci gracz nie zachowuje nic z rozgrywki: materiałów, EXP, poziomów, zakupionych modułów ani ulepszeń. Kolejna rozgrywka zaczyna się od stanu początkowego, bez trwałego rozwoju.
 
 6. Dalsze ustalenia
 Mechanika modułów, energii i uzbrojenia oraz kolejne odpowiedzi i doprecyzowania użytkownika są ujęte w punkcie 3. Użytkownik dostarczy później dalsze szczegóły modułów, przeciwników i broni. Pytania dotyczące nieustalonych reguł znajdują się w punkcie 7.
-Do ustalenia pozostają silnik, obsługiwane systemy operacyjne, proporcje ekranu, szczegóły sterowania i możliwość zapisu trwającej rozgrywki przed śmiercią.
-Obecny etap obejmuje dokumentację i bazę grafiki. Nie ma jeszcze uruchamialnej gry.
+Wersja testowa ma interfejs bazowy 1440 × 900 skalowany do okna, przypisania sterowania zmieniane i zapisywane przez gracza oraz brak zapisu konfiguracji statku. Dalsze platformy i zapis rozgrywki docelowej pozostają do ustalenia.
+Obecny etap obejmuje działający prototyp semi_goal na pustej arenie. Zakres i wyjątki testowe opisuje punkt 8 oraz plik semi_goal.
 
 7. Pozostałe ustalenia przed implementacją
 Poprzednie pytania o tryby broni, rakiety, skrzyżowania kabli, remisy priorytetów, powrót zasilania, zryw i znaczenie wskaźników HUD zostały rozstrzygnięte w punkcie 3.
 
 Do ustalenia w kolejnych etapach:
-- Zatwierdzenie technologii, obsługiwane systemy komputerowe, proporcje ekranu i przypisania klawiszy.
+- Ewentualne dalsze platformy i docelowe warianty interfejsu poza zatwierdzonym prototypem Linux.
 - Dokładne rozliczanie wydawanego EXP względem poziomów, progi awansu, ceny, sposób zbierania nagród i ewentualny zapis trwającej rozgrywki.
 - Wymiary siatki i modułów, rozmieszczenie portów, poziomy rozszerzające siatkę oraz szczegółowe parametry mostka kablowego i ewentualne limity długości/przepustowości kabli.
 - Wartości produkcji, pojemności i zużycia energii; parametry ruchu, uzbrojenia, osłon, ulepszeń i przeciwników.
 - Dokładne skalowanie żółtego wskaźnika zużycia energii na sekundę względem prezentacji zielonego zapasu baterii.
 
-Powyższe szczegóły nie zmieniają już potwierdzonych zasad. Nie rozpoczęto implementacji.
+Powyższe szczegóły nie zmieniają już potwierdzonych zasad. Parametry użyte w prototypie są robocze.
+
+8. Wersja testowa semi_goal — zatwierdzony wyjątek od reguł pełnej gry
+Pusta arena bez przeciwników z działającym ruchem, blasterem, rakietą, energią, osłonami i zrywem po zamontowaniu właściwych modułów.
+Pełnoekranowy panel statku jest dostępny w dowolnym momencie przez przycisk i klawisz Tab; nie wymaga awansu. Zatrzymuje symulację.
+Siatka ma roboczo 16 × 10 pól. Wszystkie moduły są dostępne bezpłatnie w wielu egzemplarzach; ulepszenia też nic nie kosztują.
+Można dodawać, przesuwać, obracać i usuwać moduły oraz edytować kable i mostki. Pomocnicze automatyczne trasowanie nie zastępuje reguł połączeń.
+Domyślne sterowanie: WASD — ruch, Spacja — zryw, LPM/PPM — kanały broni, Tab — panel, Esc — ustawienia. F11 przełącza pełny ekran.
+Przypisania klawiszy i przycisków myszy oraz ustawienia audio są zapisywane między uruchomieniami. Konfiguracja statku i stan rozgrywki nie są zapisywane; start zawsze od zestawu początkowego.
+Konsola testowa pozwala zadawać obrażenia, uzupełniać lub opróżniać baterie, naprawiać kadłub i przywracać konfigurację początkową. Naprawa po zniszczeniu statku jest celowym ułatwieniem laboratorium.
+Rozmiary, koszty energii i parametry pracy są robocze. Żółty wskaźnik ma roboczą skalę 0–100 E/s oraz liczbowy odczyt wygładzonego zużycia.
+Brak własnej grafiki sterownika osłon jest tymczasowo rozwiązany ikoną osłon z oznaczeniem C. Mostek jest rysowany przez interfejs. Oryginalne obrazy i muzyka pozostają bez zmian.
+Rozwój kodu odbywa się z użyciem Gita i commitów spójnych etapów. Wymienione wcześniej zasady awansów, kosztów i utraty postępu dotyczą pełnej gry; laboratorium służy testowaniu modułów.

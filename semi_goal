@@ -15,11 +15,16 @@ Zatwierdzony zakres
 - Zachowujemy wcześniejsze grafiki i muzykę. Wersja testowa używa istniejących zasobów.
 
 Realizacja
-[ ] Fundament projektu i niezależny model symulacji.
-[ ] Edytor statku, sieci kabli i diagnostyka.
-[ ] Arena, broń, napęd, energia i osłony.
-[ ] Zapis ustawień sterowania i narzędzia testowe.
-[ ] Testy mechanik, uruchomienie Godota, weryfikacja wizualna i pakiet Linux.
+[x] Fundament projektu i niezależny model symulacji.
+[x] Edytor statku, sieci kabli i diagnostyka.
+[x] Arena, broń, napęd, energia i osłony.
+[x] Zapis ustawień sterowania i narzędzia testowe.
+[x] Testy mechanik, uruchomienie Godota, weryfikacja wizualna i pakiet Linux.
+
+Weryfikacja: 30/30 testów modelu; test integracyjny w oknie Godota i dwukrotnie
+w samodzielnym pakiecie Linux uruchomionym poza projektem bez SDK .NET.
+Sprawdzono obrazy interfejsu w 1440 × 900 i 1152 × 720. Kompilacja bez ostrzeżeń.
+Program: build/linux/Orbital.x86_64. Instrukcja: README.txt. Testy: ./test.sh --ui.
 
 Git: regularne commity spójnych etapów. Brak publikowania repozytorium.
 Przeciwnicy, levelowanie, ekonomia i końcowy balans są poza tym etapem.

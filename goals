@@ -11,7 +11,7 @@ Etap 0 — przygotowanie
 [x] Ustalić sterowanie: klawiatura i mysz, ręczne celowanie, ruch po całym ekranie, LPM/PPM.
 [x] Ustalić pauzę po awansie, wydawanie EXP kosztem postępu poziomu i utratę całego postępu po śmierci.
 [x] Ustalić główne zasady energii, priorytetów, kabli, sterowników, napędu, broni i osłon.
-[ ] Zatwierdzić silnik, język i obsługiwane systemy operacyjne; propozycja do rozważenia: Godot 4 .NET + C#, bez podjętej jeszcze decyzji.
+[x] Zatwierdzić technologię prototypu: Godot 4 .NET + C#, Linux x86_64.
 [x] Doprecyzować tryby broni, detonację rakiet, mostki kablowe, remisy priorytetów, powrót zasilania, zryw i znaczenie wskaźników energii.
 [ ] Doprecyzować rozliczanie EXP oraz pozostałe parametry wymienione w assumptions.
 
@@ -61,4 +61,4 @@ Etap 5 — przygotowanie gry
 [ ] Ustalić parametry i balans, czytelność pocisków oraz wydajność przy dużej liczbie obiektów.
 [ ] Przygotować uruchamialną aplikację na uzgodnione systemy komputerowe.
 
-Kolejność jest propozycją realizacji. Zaznaczone ustalenia oznaczają decyzje projektowe lub istniejące zasoby, nie gotowe mechaniki. Otwarte szczegóły pozostają opisane w assumptions. Obecna aktualizacja obejmuje tylko dokumentację.
+Kolejność jest propozycją realizacji. Zaznaczone ustalenia oznaczają decyzje projektowe lub istniejące zasoby, nie gotowe mechaniki. Otwarte szczegóły pozostają opisane w assumptions. Wersja semi_goal realizuje osobny zakres laboratorium opisany w pliku semi_goal. Powyższe etapy nadal opisują pełną grę, w tym przyszłe awanse, ekonomię i przeciwników.
