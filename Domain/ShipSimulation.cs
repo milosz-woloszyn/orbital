@@ -22,6 +22,7 @@ public sealed class ShipSimulation
     private readonly Dictionary<int, Runtime> runtime = new();
     private readonly Dictionary<int, ModuleStatus> status = new();
     private WireNetwork power = null!, control = null!;
+    private readonly Dictionary<WireKind, WireNetwork> dataNetworks = new();
     private int revision = -1;
     private readonly Dictionary<int, int> distances = new();
     public ShipSimulation(ShipLayout layout, double hullCapacity = 100)
@@ -242,7 +243,10 @@ public sealed class ShipSimulation
             if (state.Mode != module.WeaponMode || state.BurstDuration != module.BurstDuration || state.BurstGap != module.BurstGap)
             { state.ShotCooldown = 0; state.BurstTime = 0; state.Mode = module.WeaponMode; state.BurstDuration = module.BurstDuration; state.BurstGap = module.BurstGap; }
         }
-        power = Layout.BuildNetwork(WireKind.Power); control = Layout.BuildNetwork(WireKind.Control);
+        power = Layout.BuildNetwork(WireKind.Power);
+        foreach (var kind in Enum.GetValues<WireKind>().Where(k => k != WireKind.Power))
+            dataNetworks[kind] = Layout.BuildNetwork(kind);
+        control = dataNetworks[WireKind.Control];
         var sources = Layout.Modules.Where(m => m.Definition.IsEnergy).Select(m => m.Id).ToArray();
         distances.Clear();
         foreach (var module in Layout.Modules) distances[module.Id] = power.DistanceToNearest(module.Id, sources);
@@ -259,7 +263,9 @@ public sealed class ShipSimulation
     {
         if (!enabled.Contains(module.Id)) return null;
         if (module.Definition.RequiredController is not { } kind) return new();
-        foreach (var controller in Layout.Modules.Where(m => m.Kind == kind && enabled.Contains(m.Id) && control.Connected(module.Id, m.Id))
+        if (module.DataInputKind is not { } input) return null;
+        var network = dataNetworks[input];
+        foreach (var controller in Layout.Modules.Where(m => m.Kind == kind && enabled.Contains(m.Id) && network.Connected(module.Id, m.Id))
                      .OrderByDescending(m => m.Priority).ThenBy(m => m.Id))
         {
             var chain = Dependencies(controller, enabled);

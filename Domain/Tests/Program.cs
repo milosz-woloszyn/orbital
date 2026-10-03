@@ -32,6 +32,14 @@ var tests = new (string, Action)[]
     ("Passive gaps begin at burst end and cannot bypass shot cooldown", BurstBoundaries),
     ("Charging pays controller cost before storing surplus", ChargingControlCost),
     ("Unavailable emergency control does not start or consume cooldown", UnavailableEmergency),
+    ("Typed terminal contract and all rotated controller ports", TypedPorts),
+    ("Wrong system draw and connect preserve the entire transaction", WrongSystemTransactions),
+    ("Controllers require separate command input and system output", SeparateControllerNetworks),
+    ("Mixed data bridge crossings stay isolated and cannot be merged", TypedBridgeCrossing),
+    ("Add move and rotation reject incompatible terminal contacts atomically", TypedModuleEdits),
+    ("Routes can pass alongside incompatible terminals without touching", PassAlongsideTerminal),
+    ("Starter addon geometry can be routed and remains operational", StarterAddons),
+    ("Main generator exposes only power and runs without data or controllers", GeneratorPowerOnly),
 };
 int failed = 0;
 foreach (var (name, test) in tests)
@@ -57,27 +65,39 @@ static void Draw(ShipLayout layout, WireKind kind, Cell a, Cell b)
 { var result = layout.TryDrawWire(kind, Line(a, b)); Check(result.Success, result.Error); }
 static ShipLayout Bus(params ModuleKind[] kinds)
 {
-    var layout = new ShipLayout(kinds.Length * 4 + 4, 8);
+    var layout = new ShipLayout(kinds.Length * 4 + 4, 18);
     for (int i = 0; i < kinds.Length; i++)
     {
         Check(layout.TryAdd(kinds[i], new(2 + i * 4, 2), out var module).Success);
         module!.Priority = module.Kind == ModuleKind.Command || module.Definition.IsController ? 10 : 5;
     }
+    // Preserve the original power geometry: distance/tie and island assertions depend on it.
     Draw(layout, WireKind.Power, new(1, 0), new(layout.Width - 2, 0));
-    Draw(layout, WireKind.Control, new(1, 6), new(layout.Width - 2, 6));
     foreach (var module in layout.Modules)
     {
         var power = module.Port(WireKind.Power).CableCell;
         Draw(layout, WireKind.Power, new(power.X, 0), power);
-        var data = module.Port(WireKind.Control).CableCell;
-        Draw(layout, WireKind.Control, data, new(data.X, 6));
+    }
+    // Each data type has its own horizontal bus, with isolated perpendicular crossings.
+    foreach (var kind in Enum.GetValues<WireKind>().Where(k => k != WireKind.Power))
+    {
+        var candidates = layout.Modules.Where(m => m.HasPort(kind)).ToArray();
+        if (candidates.Length == 0) continue;
+        int row = 5 + (int)kind * 2;
+        var ports = candidates.Select(m => m.Port(kind).CableCell).ToArray();
+        Check(layout.TryDrawWire(kind, Line(new(1, row), new(layout.Width - 2, row)), true).Success);
+        foreach (var port in ports)
+        {
+            var result = layout.TryDrawWire(kind, Line(port, new(port.X, row)), true);
+            Check(result.Success, result.Error);
+        }
     }
     return layout;
 }
 static void Starter()
 {
     var layout = ShipLayout.CreateStarter();
-    Check(layout.Width == 16 && layout.Height == 10 && layout.Modules.Count == 9);
+    Check(layout.Width == 18 && layout.Height == 12 && layout.Modules.Count == 9);
     var network = layout.BuildNetwork(WireKind.Power);
     foreach (var module in layout.Modules) Check(network.Connected(layout.Modules[0].Id, module.Id), $"Unwired {module.Kind}");
     var sim = new ShipSimulation(layout);
@@ -96,7 +116,7 @@ static void Editing()
     Check(layout.TryRotate(module.Id).Success);
     Check(module.Width == 1 && module.Height == 2);
     Check(module.Port(WireKind.Power).Facing == Direction.East);
-    Check(!layout.TryMove(module.Id, new(15, 9)).Success);
+    Check(!layout.TryMove(module.Id, new(17, 11)).Success);
     Check(module.Position == new Cell(2, 2));
     Check(!layout.TryDrawWire(WireKind.Power, new[] { new Cell(1, 2), new Cell(2, 2) }).Success);
     Check(layout.Wires.Count == 0);
@@ -110,25 +130,32 @@ static void Bridges()
     {
     var layout = new ShipLayout(12, 12);
     // Inward-facing ports at west/east/north/south of the crossing.
-    int offset = kind == WireKind.Power ? 0 : 2;
-    layout.TryAdd(ModuleKind.EngineControl, new(1, 5), out var west, 1 + offset);
-    layout.TryAdd(ModuleKind.EngineControl, new(9, 5), out var east, 3 + offset);
-    layout.TryAdd(ModuleKind.EngineControl, new(5, 1), out var north, 2 + offset);
-    layout.TryAdd(ModuleKind.EngineControl, new(5, 9), out var south, offset);
+    var moduleKind = kind switch
+    {
+        WireKind.PowerData => ModuleKind.PowerControl,
+        WireKind.WeaponData => ModuleKind.WeaponControl,
+        WireKind.ShieldData => ModuleKind.ShieldControl,
+        _ => ModuleKind.EngineControl
+    };
+    int offset = kind == WireKind.Power ? 0 : kind == WireKind.Control ? 1 : 2;
+    layout.TryAdd(moduleKind, new(1, 5), out var west, 1 + offset);
+    layout.TryAdd(moduleKind, new(9, 5), out var east, 3 + offset);
+    layout.TryAdd(moduleKind, new(5, 1), out var north, 2 + offset);
+    layout.TryAdd(moduleKind, new(5, 9), out var south, offset);
     Draw(layout, kind, new(2, 5), new(8, 5));
     Draw(layout, kind, new(5, 2), new(5, 8));
     var sim = new ShipSimulation(layout);
     Check(layout.BuildNetwork(kind).Connected(west!.Id, north!.Id));
     Check(layout.TrySetBridge(new(5, 5), true).Success);
     sim.Refresh();
-    var graph = kind == WireKind.Power ? sim.PowerNetwork : sim.ControlNetwork;
+    var graph = layout.BuildNetwork(kind);
     Check(!graph.Connected(west.Id, north.Id));
     Check(graph.Distance(west.Id, north.Id) == int.MaxValue);
     Check(graph.Connected(west.Id, east!.Id) && graph.Connected(north.Id, south!.Id));
     Check(!layout.TryDrawWire(kind, new[] { new Cell(4, 5), new Cell(5, 5), new Cell(5, 6) }).Success);
     Check(layout.TrySetBridge(new(5, 5), false).Success);
     sim.Refresh();
-    Check((kind == WireKind.Power ? sim.PowerNetwork : sim.ControlNetwork).Connected(west.Id, north.Id));
+    Check(layout.BuildNetwork(kind).Connected(west.Id, north.Id));
     }
 }
 static void Dependencies()
@@ -220,6 +247,13 @@ static void AutoRouting()
 {
     var layout = Bus(Enum.GetValues<ModuleKind>()); layout.ClearWires();
     var errors = layout.AutoConnectAll(); Check(errors.Count == 0, string.Join("; ", errors));
+    foreach (var kind in Enum.GetValues<WireKind>())
+    {
+        var network = layout.BuildNetwork(kind);
+        foreach (var module in layout.Modules)
+            Check(network.ModuleIslands.ContainsKey(module.Id) == module.HasPort(kind),
+                $"{module.Kind} must only belong to supported {kind} networks");
+    }
     var sim = new ShipSimulation(layout); Check(sim.Status.Values.All(s => s.Powered));
 }
 static void Islands()
@@ -288,7 +322,7 @@ static void UnavailableReserve()
     var layout = Bus(ModuleKind.Generator, ModuleKind.Command, ModuleKind.PowerControl, ModuleKind.EngineControl,
         ModuleKind.Engine, ModuleKind.Engine, ModuleKind.Engine, ModuleKind.Emergency, ModuleKind.Battery);
     var battery = Of(layout, ModuleKind.Battery);
-    layout.RemoveWire(battery.Port(WireKind.Control).CableCell, WireKind.Control);
+    layout.RemoveWire(battery.Port(WireKind.PowerData).CableCell, WireKind.PowerData);
     var sim = new ShipSimulation(layout); sim.Step(.01, new(MoveRequested: true));
     Near(77, sim.Generation); Near(120, sim.Energy);
     Check(sim.Status[battery.Id].State == ModuleState.NoControl);
@@ -379,7 +413,7 @@ static void RefreshedEditing()
     double energy = sim.Energy, cooldown = sim.Status[weapon.Id].CooldownRemaining;
     for (int i = 0; i < 3; i++) { sim.Refresh(); sim.Step(0, new(LeftFire: true)); }
     Near(energy, sim.Energy); Near(cooldown, sim.Status[weapon.Id].CooldownRemaining);
-    Check(layout.TryMove(weapon.Id, new(12, 8), 1).Success); sim.Refresh();
+    Check(layout.TryMove(weapon.Id, new(15, 9), 1).Success); sim.Refresh();
     Check(!sim.Status[weapon.Id].Powered); Near(energy, sim.Energy);
     Check(layout.TryRotate(weapon.Id).Success); sim.Refresh(); Near(energy, sim.Energy);
     layout.Upgrade(battery.Id); sim.Refresh(); Near(144, sim.Capacity); Near(energy, sim.Energy);
@@ -487,4 +521,207 @@ static void UnavailableEmergency()
     Check(!sim.Status[emergency.Id].Powered);
     Draw(layout, WireKind.Power, new(port.X, 0), port); sim.Refresh();
     sim.Step(.01, new(MoveRequested: true)); Near(77, sim.Generation); Check(sim.Status[emergency.Id].Active);
+}
+
+static string Snapshot(ShipLayout layout) => $"{layout.Revision}|" +
+    string.Join(";", layout.Modules.Select(m => $"{m.Id}:{m.Kind}:{m.Position}:{m.Rotation}")) + "|" +
+    string.Join(";", layout.Wires.OrderBy(w => w.Cell.Y).ThenBy(w => w.Cell.X).ThenBy(w => w.Kind)) + "|" +
+    string.Join(";", layout.Bridges.OrderBy(c => c.Y).ThenBy(c => c.X));
+
+static void TypedPorts()
+{
+    Check(Enum.GetValues<WireKind>().SequenceEqual(new[] { WireKind.Power, WireKind.Control,
+        WireKind.EngineData, WireKind.PowerData, WireKind.WeaponData, WireKind.ShieldData }));
+    var layout = new ShipLayout();
+    foreach (var kind in new[] { ModuleKind.EngineControl, ModuleKind.PowerControl, ModuleKind.WeaponControl, ModuleKind.ShieldControl })
+    {
+        Check(layout.TryAdd(kind, new(4, 4), out var module).Success);
+        var controller = module!;
+        Check(controller.DataInputKind == WireKind.Control && controller.DataOutputKind is not null);
+        var output = controller.DataOutputKind!.Value;
+        Check(Enum.GetValues<WireKind>().Count(controller.HasPort) == 3);
+        for (int rotation = 0; rotation < 4; rotation++)
+        {
+            Check(controller.Port(WireKind.Power).Facing == Direction.North.Rotate(rotation));
+            Check(controller.Port(WireKind.Control).Facing == Direction.West.Rotate(rotation));
+            Check(controller.Port(output).Facing == Direction.South.Rotate(rotation));
+            Check(controller.Port(output).CableCell != controller.Port(WireKind.Control).CableCell);
+            Check(layout.TryRotate(controller.Id).Success);
+        }
+        layout.Remove(controller.Id);
+    }
+    Check(layout.TryAdd(ModuleKind.Engine, new(4, 4), out var engine).Success);
+    Check(engine!.DataInputKind == WireKind.EngineData && engine.DataOutputKind is null && !engine.HasPort(WireKind.Control));
+    bool threw = false;
+    try { engine.Port(WireKind.Control); } catch (ArgumentException) { threw = true; }
+    Check(threw);
+    var command = layout.BuildNetwork(WireKind.Control);
+    Check(command.IslandOf(engine.Id) == -1 && !command.Connected(engine.Id, engine.Id));
+    Check(command.Distance(engine.Id, engine.Id) == int.MaxValue);
+    layout.Remove(engine.Id);
+    Check(layout.TryAdd(ModuleKind.Command, new(4, 4), out var root).Success);
+    Check(root!.DataInputKind is null && root.DataOutputKind == WireKind.Control);
+}
+static void WrongSystemTransactions()
+{
+    var layout = new ShipLayout();
+    Check(layout.TryAdd(ModuleKind.EngineControl, new(2, 2), out var engineController).Success);
+    Check(layout.TryAdd(ModuleKind.Blaster, new(7, 2), out var weapon).Success);
+    string before = Snapshot(layout);
+    Check(!layout.TryConnect(engineController!.Id, weapon!.Id, WireKind.EngineData).Success);
+    Check(Snapshot(layout) == before);
+    Check(!layout.TryConnect(engineController.Id, weapon.Id, WireKind.Control).Success);
+    Check(Snapshot(layout) == before);
+    // Endpoint at the wrong terminal fails before any automatic crossing bridge is committed.
+    Draw(layout, WireKind.Power, new(5, 3), new(5, 7));
+    before = Snapshot(layout);
+    Check(!layout.TryDrawWire(WireKind.EngineData, Line(new(2, 4), weapon.Port(WireKind.WeaponData).CableCell), true).Success);
+    Check(Snapshot(layout) == before);
+    Check(!layout.TryDrawWire(WireKind.Control, new[] { weapon.Port(WireKind.Power).CableCell }).Success);
+    Check(Snapshot(layout) == before);
+    // Incompatible cable types cannot meet along a shared edge either.
+    var edges = new ShipLayout();
+    Draw(edges, WireKind.EngineData, new(1, 4), new(4, 4));
+    before = Snapshot(edges);
+    Check(!edges.TryDrawWire(WireKind.WeaponData, Line(new(6, 4), new(4, 4)), true).Success);
+    Check(Snapshot(edges) == before);
+}
+static void SeparateControllerNetworks()
+{
+    var layout = Bus(ModuleKind.Generator, ModuleKind.Command, ModuleKind.EngineControl, ModuleKind.Engine);
+    var command = Of(layout, ModuleKind.Command); var controller = Of(layout, ModuleKind.EngineControl);
+    var engine = Of(layout, ModuleKind.Engine); var sim = new ShipSimulation(layout);
+    Check(sim.ControlNetwork.Connected(command.Id, controller.Id));
+    Check(!sim.ControlNetwork.Connected(command.Id, engine.Id));
+    Check(layout.BuildNetwork(WireKind.EngineData).Connected(controller.Id, engine.Id));
+    Check(!layout.BuildNetwork(WireKind.EngineData).Connected(command.Id, engine.Id));
+    Check(sim.Step(.01, new(MoveRequested: true)).MoveSpeed > 0);
+    layout.RemoveWire(controller.Port(WireKind.Control).CableCell, WireKind.Control);
+    Check(sim.Step(.01, new(MoveRequested: true)).MoveSpeed == 0);
+    Check(sim.Status[engine.Id].State == ModuleState.NoControl);
+    Check(layout.BuildNetwork(WireKind.EngineData).Connected(controller.Id, engine.Id));
+    Check(layout.TryConnect(command.Id, controller.Id, WireKind.Control).Success);
+    Check(sim.Step(.01, new(MoveRequested: true)).MoveSpeed > 0);
+    layout.RemoveWire(controller.Port(WireKind.EngineData).CableCell, WireKind.EngineData);
+    Check(sim.ControlNetwork.Connected(command.Id, controller.Id));
+    Check(sim.Step(.01, new(MoveRequested: true)).MoveSpeed == 0);
+    Check(sim.Status[engine.Id].State == ModuleState.NoControl);
+    Check(!layout.TryConnect(command.Id, engine.Id, WireKind.Control).Success);
+    // Removing the controller cannot let the command bus service its engine directly.
+    layout.Remove(controller.Id);
+    Check(sim.Step(.01, new(MoveRequested: true)).MoveSpeed == 0);
+}
+static void TypedBridgeCrossing()
+{
+    var layout = new ShipLayout(12, 12);
+    Check(layout.TryAdd(ModuleKind.EngineControl, new(1, 5), out var west, 3).Success);
+    Check(layout.TryAdd(ModuleKind.EngineControl, new(9, 5), out var east, 1).Success);
+    Check(layout.TryAdd(ModuleKind.WeaponControl, new(5, 1), out var north).Success);
+    Check(layout.TryAdd(ModuleKind.WeaponControl, new(5, 9), out var south, 2).Success);
+    Draw(layout, WireKind.EngineData, new(2, 5), new(8, 5));
+    var path = Line(new(5, 2), new(5, 8)); string before = Snapshot(layout);
+    Check(!layout.TryDrawWire(WireKind.WeaponData, path).Success && before == Snapshot(layout));
+    Check(layout.TryDrawWire(WireKind.WeaponData, path, true).Success);
+    Check(layout.IsBridge(new(5, 5)));
+    Check(layout.BuildNetwork(WireKind.EngineData).Connected(west!.Id, east!.Id));
+    Check(layout.BuildNetwork(WireKind.WeaponData).Connected(north!.Id, south!.Id));
+    Check(!layout.BuildNetwork(WireKind.EngineData).Connected(west.Id, north.Id));
+    before = Snapshot(layout);
+    Check(!layout.TrySetBridge(new(5, 5), false).Success && before == Snapshot(layout));
+    Check(!layout.TryDrawWire(WireKind.ShieldData, path, true).Success && before == Snapshot(layout));
+    Check(!layout.TryDrawWire(WireKind.EngineData, new[] { new Cell(4, 5), new Cell(5, 5), new Cell(5, 6) }, true).Success);
+    Check(before == Snapshot(layout));
+    layout.RemoveWire(new(5, 5), WireKind.WeaponData);
+    Check(layout.TrySetBridge(new(5, 5), false).Success);
+}
+static void TypedModuleEdits()
+{
+    var layout = new ShipLayout();
+    Check(layout.TryAdd(ModuleKind.WeaponControl, new(5, 5), out var former, 2).Success);
+    Draw(layout, WireKind.WeaponData, new(5, 3), new(5, 4));
+    layout.Remove(former!.Id);
+    string before = Snapshot(layout);
+    // The remaining south-facing arm at (5,4) would enter this engine's north-facing data terminal.
+    Check(!layout.TryAdd(ModuleKind.Engine, new(5, 5), out var rejected, 2).Success);
+    Check(rejected is null && before == Snapshot(layout));
+    Check(layout.TryAdd(ModuleKind.Engine, new(9, 7), out var engine, 2).Success);
+    Check(engine!.Id == former.Id + 1, "Failed adds must not consume module IDs");
+    before = Snapshot(layout);
+    Check(!layout.TryMove(engine.Id, new(5, 5)).Success && before == Snapshot(layout));
+
+    var rotations = new ShipLayout();
+    Check(rotations.TryAdd(ModuleKind.WeaponControl, new(6, 5), out var formerController, 3).Success);
+    Draw(rotations, WireKind.WeaponData, new(7, 5), new(8, 5));
+    rotations.Remove(formerController!.Id);
+    Check(rotations.TryAdd(ModuleKind.EngineControl, new(6, 5), out var controller).Success);
+    before = Snapshot(rotations);
+    // Clockwise rotation points the command input north and the power port east into weapon data.
+    Check(!rotations.TryRotate(controller!.Id).Success && before == Snapshot(rotations));
+    // Counterclockwise rotation puts the engine output east into the same incompatible wire.
+    Check(!rotations.TryMove(controller.Id, controller.Position, 3).Success && before == Snapshot(rotations));
+}
+static void PassAlongsideTerminal()
+{
+    var layout = new ShipLayout();
+    Check(layout.TryAdd(ModuleKind.Blaster, new(5, 2), out var weapon).Success);
+    Draw(layout, WireKind.EngineData, new(3, 4), new(7, 4));
+    Check(!layout.BuildNetwork(WireKind.EngineData).ModuleIslands.ContainsKey(weapon!.Id));
+    string before = Snapshot(layout);
+    Check(!layout.TryDrawWire(WireKind.EngineData, new[] { new Cell(5, 4) }).Success);
+    Check(before == Snapshot(layout));
+}
+static void StarterAddons()
+{
+    var layout = ShipLayout.CreateStarter();
+    foreach (var (kind, position) in new (ModuleKind, Cell)[]
+    {
+        (ModuleKind.Shield, new(1, 9)), (ModuleKind.ShieldControl, new(5, 10)),
+        (ModuleKind.Dash, new(8, 10)), (ModuleKind.Generator, new(15, 9))
+    }) Check(layout.TryAdd(kind, position, out _).Success, $"Cannot place {kind} at {position}");
+    var errors = layout.AutoConnectAll(); Check(errors.Count == 0, string.Join("; ", errors));
+    var sim = new ShipSimulation(layout);
+    Check(sim.Status.Values.All(s => s.Powered));
+    var frame = sim.Step(.01, new(MoveRequested: true, DashRequested: true, LeftFire: true));
+    Check(frame.MoveSpeed > 0 && frame.DashStarted && frame.Shots.Count == 1);
+}
+
+static void GeneratorPowerOnly()
+{
+    var layout = new ShipLayout();
+    Check(layout.TryAdd(ModuleKind.Generator, new(3, 3), out var added).Success);
+    var generator = added!;
+    Check(generator.Definition.RequiredController is null);
+    for (int rotation = 0; rotation < 4; rotation++)
+    {
+        Check(generator.DataInputKind is null && generator.DataOutputKind is null);
+        Check(Enum.GetValues<WireKind>().Where(generator.HasPort).SequenceEqual(new[] { WireKind.Power }));
+        Check(generator.Port(WireKind.Power).Facing == Direction.North.Rotate(rotation));
+        foreach (var kind in Enum.GetValues<WireKind>().Where(k => k != WireKind.Power))
+        {
+            bool threw = false;
+            try { generator.Port(kind); } catch (ArgumentException) { threw = true; }
+            Check(threw, $"Main generator cannot expose a {kind} terminal");
+            Check(layout.BuildNetwork(kind).IslandOf(generator.Id) == -1);
+        }
+        Check(layout.TryRotate(generator.Id).Success);
+    }
+    var independent = new ShipSimulation(layout);
+    independent.Step(1, new());
+    Near(32, independent.Generation);
+    Check(independent.Status[generator.Id].Powered);
+
+    var starter = ShipLayout.CreateStarter();
+    var main = Of(starter, ModuleKind.Generator);
+    Check(!starter.Wires.Any(w => w.Kind == WireKind.PowerData && w.Cell.Y == 3 && w.Cell.X < 5),
+        "Starter must not retain the old data stub toward the main generator");
+    string before = Snapshot(starter);
+    Check(!starter.TryConnect(main.Id, Of(starter, ModuleKind.PowerControl).Id, WireKind.PowerData).Success);
+    Check(before == Snapshot(starter));
+    starter.Remove(Of(starter, ModuleKind.Command).Id);
+    starter.Remove(Of(starter, ModuleKind.PowerControl).Id);
+    var sim = new ShipSimulation(starter);
+    sim.Step(.1, new());
+    Near(32, sim.Generation);
+    Check(sim.Status[main.Id].Powered);
+    Check(sim.Status[Of(starter, ModuleKind.Battery).Id].State == ModuleState.NoControl);
 }

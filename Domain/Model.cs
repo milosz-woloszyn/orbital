@@ -8,7 +8,7 @@ public readonly record struct Cell(int X, int Y)
 
 [Flags]
 public enum Direction { None = 0, North = 1, East = 2, South = 4, West = 8 }
-public enum WireKind { Power, Control }
+public enum WireKind { Power, Control, EngineData, PowerData, WeaponData, ShieldData }
 public enum ModuleKind
 {
     Generator, Battery, Emergency, Feedback, Engine, Dash, Command,
@@ -109,14 +109,38 @@ public sealed class ShipModule
     {
         get { for (int y = 0; y < Height; y++) for (int x = 0; x < Width; x++) yield return Position + new Cell(x, y); }
     }
-    // Provisional ports: power on the top-left edge, data on the bottom-right edge.
+    public WireKind? DataInputKind => Kind switch
+    {
+        // The main generator is autonomous and exposes only its power terminal.
+        ModuleKind.Generator => null,
+        ModuleKind.EngineControl or ModuleKind.PowerControl or ModuleKind.WeaponControl or ModuleKind.ShieldControl => WireKind.Control,
+        ModuleKind.Engine or ModuleKind.Dash => WireKind.EngineData,
+        ModuleKind.Battery or ModuleKind.Emergency or ModuleKind.Feedback => WireKind.PowerData,
+        ModuleKind.Blaster or ModuleKind.Rocket => WireKind.WeaponData,
+        ModuleKind.Shield => WireKind.ShieldData,
+        _ => null
+    };
+    public WireKind? DataOutputKind => Kind switch
+    {
+        ModuleKind.Command => WireKind.Control,
+        ModuleKind.EngineControl => WireKind.EngineData,
+        ModuleKind.PowerControl => WireKind.PowerData,
+        ModuleKind.WeaponControl => WireKind.WeaponData,
+        ModuleKind.ShieldControl => WireKind.ShieldData,
+        _ => null
+    };
+    public bool HasPort(WireKind kind) => kind == WireKind.Power || kind == DataInputKind || kind == DataOutputKind;
+
+    // Local terminals rotate with the footprint. Controller input and output are separate leaves.
     public ModulePort Port(WireKind kind)
     {
-        int x = kind == WireKind.Power ? 0 : Definition.Width - 1;
-        int y = kind == WireKind.Power ? 0 : Definition.Height - 1;
+        if (!HasPort(kind)) throw new ArgumentException("Module does not support this wire kind.", nameof(kind));
+        bool commandInput = Definition.IsController && kind == WireKind.Control;
+        int x = kind == WireKind.Power || commandInput ? 0 : Definition.Width - 1;
+        int y = kind == WireKind.Power || commandInput ? 0 : Definition.Height - 1;
         int width = Definition.Width, height = Definition.Height;
         for (int i = 0; i < Rotation; i++) { (x, y) = (height - 1 - y, x); (width, height) = (height, width); }
-        var facing = (kind == WireKind.Power ? Direction.North : Direction.South).Rotate(Rotation);
+        var facing = (kind == WireKind.Power ? Direction.North : commandInput ? Direction.West : Direction.South).Rotate(Rotation);
         return new(Position + new Cell(x, y), facing);
     }
 }

@@ -34,7 +34,7 @@ public sealed class WireNetwork
                 foreach (var next in edges[current]) if (components.TryAdd(next, component)) queue.Enqueue(next);
             component++;
         }
-        foreach (var module in layout.Modules)
+        foreach (var module in layout.Modules.Where(m => m.HasPort(kind)))
         {
             var port = module.Port(kind);
             var node = NodeFor(port.CableCell, port.Facing.Opposite());
@@ -48,7 +48,7 @@ public sealed class WireNetwork
         ports.ContainsKey(firstId) && ports.ContainsKey(secondId) && IslandOf(firstId) == IslandOf(secondId);
     public int Distance(int firstId, int secondId)
     {
-        if (firstId == secondId) return 0;
+        if (firstId == secondId) return islands.ContainsKey(firstId) ? 0 : int.MaxValue;
         if (!Connected(firstId, secondId)) return int.MaxValue;
         var start = ports[firstId]; var target = ports[secondId];
         var distances = new Dictionary<Node, int> { [start] = 1 };

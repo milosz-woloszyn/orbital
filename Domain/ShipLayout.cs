@@ -6,7 +6,7 @@ public sealed class ShipLayout
     private readonly Dictionary<(Cell, WireKind), WireTile> wires = new();
     private readonly HashSet<Cell> bridges = new();
     private int nextId = 1;
-    public ShipLayout(int width = 16, int height = 10)
+    public ShipLayout(int width = 18, int height = 12)
     {
         if (width < 1 || height < 1) throw new ArgumentOutOfRangeException(nameof(width));
         Width = width; Height = height;
@@ -33,7 +33,7 @@ public sealed class ShipLayout
             if (ModuleAt(cell) is { } existing && existing.Id != ignoreId) return EditResult.Fail("To pole zajmuje inny moduł.");
             if (wires.Keys.Any(k => k.Item1 == cell) || bridges.Contains(cell)) return EditResult.Fail("Najpierw usuń kable i mostki z tych pól.");
         }
-        return EditResult.Ok;
+        return ValidateWires(wires, bridges, modules.Where(m => m.Id != ignoreId).Append(candidate));
     }
     public EditResult TryAdd(ModuleKind kind, Cell position, out ShipModule? module, int rotation = 0)
     {
@@ -80,8 +80,12 @@ public sealed class ShipLayout
     public EditResult TrySetBridge(Cell cell, bool enabled)
     {
         if (!Contains(cell) || ModuleAt(cell) is not null) return EditResult.Fail("Mostek wymaga pola bez modułu.");
-        if (!enabled && WireAt(cell, WireKind.Power) is not null && WireAt(cell, WireKind.Control) is not null)
+        if (!enabled && wires.Values.Count(w => w.Cell == cell) > 1)
             return EditResult.Fail("Przed usunięciem mostka usuń jeden z krzyżujących się kabli.");
+        var proposed = new HashSet<Cell>(bridges);
+        if (enabled) proposed.Add(cell); else proposed.Remove(cell);
+        var validation = ValidateWires(wires, proposed, modules);
+        if (!validation.Success) return validation;
         if (enabled) bridges.Add(cell); else bridges.Remove(cell);
         Revision++; return EditResult.Ok;
     }
@@ -121,23 +125,32 @@ public sealed class ShipLayout
                 if (direction == Direction.None) return EditResult.Fail("Kolejne pola kabla muszą stykać się bokami.");
                 arms |= direction;
             }
-            foreach (var module in modules)
+            foreach (var module in modules.Where(m => m.HasPort(kind)))
             {
                 var port = module.Port(kind);
                 if (port.CableCell == cell) arms |= port.Facing.Opposite();
             }
+            if (i == 0 || i == path.Count - 1)
+                foreach (var module in modules)
+                    foreach (var terminalKind in Enum.GetValues<WireKind>().Where(module.HasPort))
+                    {
+                        if (terminalKind == kind) continue;
+                        var terminal = module.Port(terminalKind);
+                        if (terminal.CableCell == cell &&
+                            !(IsBridge(cell) && OneAxis(arms) && arms.IsVertical() != terminal.Facing.IsVertical()))
+                            return EditResult.Fail("Koniec kabla nie pasuje do rodzaju złącza modułu.");
+                    }
             additions[cell] = arms;
         }
         var newBridges = new HashSet<Cell>();
-        foreach (var (cell, arms) in additions)
-        {
-            var other = WireAt(cell, kind == WireKind.Power ? WireKind.Control : WireKind.Power);
-            if (other is null) continue;
-            if (!(IsBridge(cell) || autoBridge)) return EditResult.Fail("Skrzyżowanie różnych rodzajów kabli wymaga mostka.");
-            if (!OneAxis(arms) || !OneAxis(other.Connections) || arms.IsVertical() == other.Connections.IsVertical())
-                return EditResult.Fail("Na mostku różne kable muszą biec prosto w osobnych osiach północ–południe i wschód–zachód.");
-            newBridges.Add(cell);
-        }
+        foreach (var cell in additions.Keys)
+            if (wires.Values.Any(w => w.Cell == cell && w.Kind != kind) && autoBridge) newBridges.Add(cell);
+        var proposedWires = new Dictionary<(Cell, WireKind), WireTile>(wires);
+        foreach (var (cell, arms) in additions) proposedWires[(cell, kind)] = new(cell, kind, arms);
+        var proposedBridges = new HashSet<Cell>(bridges);
+        proposedBridges.UnionWith(newBridges);
+        var validation = ValidateWires(proposedWires, proposedBridges, modules);
+        if (!validation.Success) return validation;
         // A bridge may have both axes of one cable type, but each traversal must be straight.
         for (int i = 1; i + 1 < path.Count; i++)
             if ((IsBridge(path[i]) || newBridges.Contains(path[i])) &&
@@ -150,7 +163,7 @@ public sealed class ShipLayout
     public IReadOnlyList<Cell>? FindRoute(Cell start, Cell end, WireKind kind, bool autoBridge = true,
         Direction startArm = Direction.None, Direction endArm = Direction.None)
     {
-        if (!Contains(start) || !Contains(end) || ModuleAt(start) is not null || ModuleAt(end) is not null) return null;
+        if (!Enum.IsDefined(kind) || !Contains(start) || !Contains(end) || ModuleAt(start) is not null || ModuleAt(end) is not null) return null;
         // Arrival direction is part of the search state so bridges cannot create hidden turns.
         var initial = (Cell: start, Arrival: startArm);
         var queue = new Queue<(Cell Cell, Direction Arrival)>(); queue.Enqueue(initial);
@@ -177,16 +190,63 @@ public sealed class ShipLayout
     }
     private bool CanTraverse(Cell cell, Direction incoming, Direction outgoing, WireKind kind, bool autoBridge)
     {
-        var other = WireAt(cell, kind == WireKind.Power ? WireKind.Control : WireKind.Power);
-        if ((IsBridge(cell) || other is not null) && incoming != Direction.None && outgoing != Direction.None && incoming.Opposite() != outgoing) return false;
-        if (other is null) return true;
+        var others = wires.Values.Where(w => w.Cell == cell && w.Kind != kind).ToArray();
+        bool bridge = IsBridge(cell) || autoBridge && others.Length > 0;
+        if (bridge && incoming != Direction.None && outgoing != Direction.None && incoming.Opposite() != outgoing) return false;
         var arms = incoming | outgoing | (WireAt(cell, kind)?.Connections ?? Direction.None);
-        return (IsBridge(cell) || autoBridge) && OneAxis(arms) && OneAxis(other.Connections) && arms.IsVertical() != other.Connections.IsVertical();
+        foreach (var module in modules.Where(m => m.HasPort(kind)))
+        {
+            var port = module.Port(kind);
+            if (port.CableCell == cell) arms |= port.Facing.Opposite();
+        }
+        if (others.Any(other => !bridge || !SeparateAxes(arms, other.Connections))) return false;
+        if (!CompatibleTerminals(new(cell, kind, arms), bridge, modules)) return false;
+        return !Directions.All.Any(d => arms.HasFlag(d) && wires.Values.Any(w =>
+            w.Cell == cell + d.Offset() && w.Kind != kind && w.Connections.HasFlag(d.Opposite())));
     }
+
+    // Validate proposed topology before committing any edit, including revision and module IDs.
+    private static EditResult ValidateWires(Dictionary<(Cell, WireKind), WireTile> proposed,
+        HashSet<Cell> proposedBridges, IEnumerable<ShipModule> proposedModules)
+    {
+        var terminals = proposedModules.ToArray();
+        foreach (var tile in proposed.Values)
+        {
+            bool bridge = proposedBridges.Contains(tile.Cell);
+            foreach (var other in proposed.Values.Where(w => w.Cell == tile.Cell && w.Kind != tile.Kind))
+                if (!bridge || !SeparateAxes(tile.Connections, other.Connections))
+                    return EditResult.Fail("Różne sieci wymagają mostka i osobnych prostych osi.");
+            if (!CompatibleTerminals(tile, bridge, terminals))
+                return EditResult.Fail("Kabel nie pasuje do rodzaju złącza modułu.");
+            foreach (var direction in Directions.All.Where(d => tile.Connections.HasFlag(d)))
+                foreach (var kind in Enum.GetValues<WireKind>().Where(k => k != tile.Kind))
+                    if (proposed.TryGetValue((tile.Cell + direction.Offset(), kind), out var neighbor) &&
+                        neighbor.Connections.HasFlag(direction.Opposite()))
+                        return EditResult.Fail("Nie można łączyć kabli różnych sieci.");
+        }
+        return EditResult.Ok;
+    }
+    private static bool CompatibleTerminals(WireTile tile, bool bridge, IEnumerable<ShipModule> candidates)
+    {
+        foreach (var module in candidates)
+            foreach (var kind in Enum.GetValues<WireKind>().Where(module.HasPort))
+            {
+                if (kind == tile.Kind) continue;
+                var port = module.Port(kind);
+                if (port.CableCell != tile.Cell) continue;
+                var arm = port.Facing.Opposite();
+                if (tile.Connections.HasFlag(arm)) return false;
+            }
+        return true;
+    }
+    private static bool SeparateAxes(Direction first, Direction second) =>
+        OneAxis(first) && OneAxis(second) && first.IsVertical() != second.IsVertical();
+
     public EditResult TryConnect(int firstId, int secondId, WireKind kind, bool autoBridge = true)
     {
         var first = Find(firstId); var second = Find(secondId);
         if (first is null || second is null) return EditResult.Fail("Oba moduły muszą istnieć.");
+        if (!first.HasPort(kind) || !second.HasPort(kind)) return EditResult.Fail("Moduły nie mają złączy dla tej sieci.");
         var a = first.Port(kind); var b = second.Port(kind);
         var route = FindRoute(a.CableCell, b.CableCell, kind, autoBridge, a.Facing.Opposite(), b.Facing.Opposite());
         return route is null ? EditResult.Fail("Brak poprawnej trasy między złączami.") : TryDrawWire(kind, route, autoBridge);
@@ -197,13 +257,13 @@ public sealed class ShipLayout
         var errors = new List<string>();
         foreach (var kind in Enum.GetValues<WireKind>())
         {
-            var candidates = modules.Where(m => kind == WireKind.Power || m.Kind != ModuleKind.Generator).ToArray();
+            var candidates = modules.Where(m => m.HasPort(kind)).ToArray();
             if (candidates.Length < 2) continue;
             var connected = new List<ShipModule> { candidates[0] };
             foreach (var module in candidates.Skip(1))
             {
-                bool success = false;
-                foreach (var target in connected.OrderBy(m => m.Port(kind).CableCell.DistanceTo(module.Port(kind).CableCell)))
+                bool success = connected.Any(target => BuildNetwork(kind).Connected(target.Id, module.Id));
+                foreach (var target in connected.Where(_ => !success).OrderBy(m => m.Port(kind).CableCell.DistanceTo(module.Port(kind).CableCell)))
                     if (TryConnect(target.Id, module.Id, kind).Success) { success = true; break; }
                 if (success) connected.Add(module);
                 else errors.Add($"{kind}: brak trasy do {module.Definition.Name} #{module.Id}.");
@@ -219,28 +279,37 @@ public sealed class ShipLayout
     public static ShipLayout CreateStarter()
     {
         var layout = new ShipLayout();
-        var kinds = new[] { ModuleKind.Generator, ModuleKind.Battery, ModuleKind.Engine, ModuleKind.Command,
-            ModuleKind.Blaster, ModuleKind.PowerControl, ModuleKind.EngineControl, ModuleKind.WeaponControl, ModuleKind.Rocket };
-        for (int i = 0; i < kinds.Length; i++)
+        var placements = new (ModuleKind Kind, Cell Position)[]
         {
-            var position = i < 5 ? new Cell(1 + 3 * i, 1) : new Cell(1 + 3 * (i - 5), 5);
-            layout.TryAdd(kinds[i], position, out var module);
+            (ModuleKind.Generator, new(1, 1)), (ModuleKind.Battery, new(4, 1)),
+            (ModuleKind.Engine, new(9, 1)), (ModuleKind.Blaster, new(13, 1)),
+            (ModuleKind.Rocket, new(15, 1)), (ModuleKind.Command, new(1, 6)),
+            (ModuleKind.PowerControl, new(5, 6)), (ModuleKind.EngineControl, new(9, 6)),
+            (ModuleKind.WeaponControl, new(13, 6))
+        };
+        foreach (var (kind, position) in placements)
+        {
+            var result = layout.TryAdd(kind, position, out var module);
+            if (!result.Success) throw new InvalidOperationException(result.Error);
             module!.Priority = module.Kind is ModuleKind.Command or ModuleKind.PowerControl ? 10 : module.Definition.IsController ? 9 : 5;
             if (module.Kind == ModuleKind.Blaster) layout.ConfigureWeapon(module.Id, WeaponMode.Left);
             if (module.Kind == ModuleKind.Rocket) layout.ConfigureWeapon(module.Id, WeaponMode.Right);
         }
-        // Separate horizontal buses joined at opposite edges leave room for later edits.
-        Draw(WireKind.Power, Line(new(0, 0), new(13, 0)));
-        Draw(WireKind.Power, Line(new(0, 0), new(0, 4)));
-        Draw(WireKind.Power, Line(new(0, 4), new(10, 4)));
-        Draw(WireKind.Control, Line(new(0, 3), new(15, 3)));
-        Draw(WireKind.Control, Line(new(15, 3), new(15, 7)));
-        Draw(WireKind.Control, Line(new(1, 7), new(15, 7)));
-        foreach (var module in layout.Modules.Where(m => m.Kind != ModuleKind.Generator))
-        {
-            var port = module.Port(WireKind.Control);
-            Draw(WireKind.Control, Line(port.CableCell, new(port.CableCell.X, module.Position.Y < 4 ? 3 : 7)));
-        }
+        Draw(WireKind.Power, Line(new(0, 0), new(15, 0)));
+        Draw(WireKind.Power, Line(new(0, 0), new(0, 5)));
+        Draw(WireKind.Power, Line(new(0, 5), new(13, 5)));
+        Draw(WireKind.Control, Line(new(2, 8), new(12, 8)));
+        foreach (int x in new[] { 4, 8, 12 }) Draw(WireKind.Control, Line(new(x, 8), new(x, 6)));
+        Draw(WireKind.PowerData, Line(new(5, 3), new(6, 3)));
+        Draw(WireKind.PowerData, Line(new(5, 2), new(5, 3)));
+        Draw(WireKind.PowerData, Line(new(6, 3), new(6, 7)));
+        Draw(WireKind.PowerData, Line(new(5, 7), new(6, 7)));
+        Draw(WireKind.EngineData, Line(new(10, 3), new(10, 7)));
+        Draw(WireKind.EngineData, Line(new(9, 7), new(10, 7)));
+        Draw(WireKind.WeaponData, Line(new(13, 3), new(16, 3)));
+        Draw(WireKind.WeaponData, Line(new(16, 2), new(16, 3)));
+        Draw(WireKind.WeaponData, Line(new(14, 3), new(14, 7)));
+        Draw(WireKind.WeaponData, Line(new(13, 7), new(14, 7)));
         return layout;
         void Draw(WireKind kind, IReadOnlyList<Cell> path)
         {
