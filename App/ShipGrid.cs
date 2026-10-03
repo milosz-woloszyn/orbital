@@ -78,6 +78,7 @@ public partial class ShipGrid : Control
         }
         if(ev is not InputEventMouseButton mouse) return;
         _hover=CellAt(mouse.Position);
+        if(mouse.IsActionPressed("pickup")) { PickUpHovered();AcceptEvent();return; }
         if(mouse.ButtonIndex==MouseButton.Right && mouse.Pressed)
         {
             if(HasPlacement || _drawing || _dragging)Cancel();

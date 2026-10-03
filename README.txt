@@ -2,6 +2,7 @@ ORBITAL — laboratorium statku / semi_goal
 
 Uruchomienie na Linuksie
 Gotowy program: build/linux/Orbital.x86_64
+Gra domyślnie zajmuje cały ekran; F11 przełącza tryb okna.
 Uruchom go z menedżera plików lub poleceniem:
     ./build/linux/Orbital.x86_64
 Zachowaj cały katalog build/linux razem z katalogiem bibliotek data_Orbital_linuxbsd_x86_64.
@@ -32,6 +33,12 @@ Stocznia
 Kliknij moduł w katalogu, a następnie wolne miejsce na siatce. R obraca podgląd, PPM anuluje.
 Kliknięcie istniejącego modułu pokazuje jego priorytet, stan, poziom i parametry.
 Przeciąganie przenosi moduł; R obraca zaznaczony moduł; Delete go usuwa.
+Q podnosi moduł spod kursora bez klikania; LPM odkłada go w wolnym miejscu, R obraca.
+Esc lub PPM podczas przenoszenia anuluje zmianę. Nieudane odłożenie pozwala wskazać inne miejsce.
+Przeniesienie zachowuje ulepszenia, priorytet i konfigurację broni. Kable pozostają na siatce.
+Poza przenoszeniem PPM usuwa wskazany moduł lub kable wraz z mostkiem z jednego pola, bez potwierdzenia.
+Skrót podnoszenia można zmienić w ustawieniach. Może dzielić klawisz z akcją używaną tylko podczas lotu.
+Wcześniejsze ustawienia są zachowane; przy konflikcie Q z menu/panelem nowy skrót otrzyma wolne E lub T.
 Wszystkie moduły i ulepszenia są bezpłatne. Ograniczeniem rozmieszczenia jest siatka 16 × 10.
 Osłona dodaje też sterownik, jeśli jeszcze go nie masz i na siatce jest miejsce.
 Sterownik osłon używa roboczo ikony emitera z oznaczeniem C.
@@ -43,6 +50,7 @@ Przeciągnięcie przez wolne pola rysuje własną trasę, zatwierdzaną po puszc
 Ten sam typ kabli łączy się na skrzyżowaniu. Mostek rozdziela trasę pionową i poziomą.
 Na mostku kabel musi przechodzić prosto. Dwa typy kabla krzyżują się na mostku.
 Kable nie mogą przechodzić przez zajęte pola modułów. Port musi mieć dostępną trasę.
+Przycisk „Połącz automatycznie” jest tylko w wersji testowej. W finalnej grze go nie będzie.
 Automatyczne łączenie zachowuje istniejące kable; nie zawsze znajdzie trasę w ciasnym układzie.
 Jeśli port wypada nad rozgałęzieniem innego kabla, przesuń/obróć moduł albo zmień trasę kabla.
 Zmiana położenia modułu pozostawia stare kable. Sprawdź komunikat inspektora i nowe porty.

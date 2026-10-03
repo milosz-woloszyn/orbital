@@ -28,3 +28,13 @@ Program: build/linux/Orbital.x86_64. Instrukcja: README.txt. Testy: ./test.sh --
 
 Git: regularne commity spójnych etapów. Brak publikowania repozytorium.
 Przeciwnicy, levelowanie, ekonomia i końcowy balans są poza tym etapem.
+
+Poprawki po testach użytkownika
+[x] Start na pełnym ekranie; układ wykorzystuje proporcje ekranu bez pustych pasów.
+[x] Brak zewnętrznych marginesów; większy obszar lotu i siatka, zachowane boczne panele.
+[x] PPM usuwa moduł, kabel i mostek spod kursora bez potwierdzenia.
+[x] Q podnosi moduł, LPM odkłada, R obraca, Esc / PPM anuluje bez utraty ustawień.
+[x] Konfigurowalny skrót podnoszenia i zachowanie wcześniejszych zapisanych przypisań.
+Przycisk „Połącz automatycznie” pozostaje tylko w prototypie i nie trafi do finalnej gry.
+
+Weryfikacja poprawek: 30/30 testów modelu oraz scenariusz UI obejmujący pełny ekran, rozmiary 1440 × 900 / 1152 × 720 / 1680 × 960, podnoszenie klawiaturą i myszą, obrót, anulowanie, nieprawidłowe odłożenie, usuwanie PPM oraz migrację zapisanych skrótów.

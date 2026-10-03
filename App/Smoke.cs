@@ -172,6 +172,10 @@ public partial class Main
         await Hover(GridPoint(new Cell(1,1)));await KeyStroke(Key.E);
         Require(Grid.MovingId!=null,"rebound pickup works");await KeyStroke(Key.Escape);
         Require(new Bindings().Name("pickup")=="E","pickup binding persists");Controls.Reset();
+        Require(Controls.Rebind("pickup",new InputEventMouseButton { ButtonIndex=MouseButton.Middle,Pressed=true },out _),"pickup supports mouse binding");
+        await Click(GridPoint(new Cell(1,1)),MouseButton.Middle);
+        Require(Grid.MovingId!=null,"mouse binding picks hovered module");
+        await Click(GridPoint(new Cell(1,1)),MouseButton.Right);Controls.Reset();
         // Existing preferences survive introduction of the new action.
         Controls.Rebind("dash",new InputEventKey { PhysicalKeycode=Key.Q,Pressed=true },out _);
         var legacy=new ConfigFile();legacy.Load("user://settings.cfg");legacy.EraseSectionKey("controls","pickup");legacy.Save("user://settings.cfg");

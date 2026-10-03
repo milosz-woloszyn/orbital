@@ -122,7 +122,7 @@ Po śmierci gracz nie zachowuje nic z rozgrywki: materiałów, EXP, poziomów, z
 
 6. Dalsze ustalenia
 Mechanika modułów, energii i uzbrojenia oraz kolejne odpowiedzi i doprecyzowania użytkownika są ujęte w punkcie 3. Użytkownik dostarczy później dalsze szczegóły modułów, przeciwników i broni. Pytania dotyczące nieustalonych reguł znajdują się w punkcie 7.
-Wersja testowa ma interfejs bazowy 1440 × 900 skalowany do okna, przypisania sterowania zmieniane i zapisywane przez gracza oraz brak zapisu konfiguracji statku. Dalsze platformy i zapis rozgrywki docelowej pozostają do ustalenia.
+Wersja testowa uruchamia się na pełnym ekranie. Interfejs bazowy 1440 × 900 rozszerza się do proporcji ekranu bez pustych pasów i zewnętrznych marginesów; boczne panele zachowują szerokość. Przypisania sterowania są zmieniane i zapisywane przez gracza, a konfiguracja statku nie jest zapisywana. Dalsze platformy i zapis rozgrywki docelowej pozostają do ustalenia.
 Obecny etap obejmuje działający prototyp semi_goal na pustej arenie. Zakres i wyjątki testowe opisuje punkt 8 oraz plik semi_goal.
 
 7. Pozostałe ustalenia przed implementacją
@@ -141,10 +141,12 @@ Powyższe szczegóły nie zmieniają już potwierdzonych zasad. Parametry użyte
 Pusta arena bez przeciwników z działającym ruchem, blasterem, rakietą, energią, osłonami i zrywem po zamontowaniu właściwych modułów.
 Pełnoekranowy panel statku jest dostępny w dowolnym momencie przez przycisk i klawisz Tab; nie wymaga awansu. Zatrzymuje symulację.
 Siatka ma roboczo 16 × 10 pól. Wszystkie moduły są dostępne bezpłatnie w wielu egzemplarzach; ulepszenia też nic nie kosztują.
-Można dodawać, przesuwać, obracać i usuwać moduły oraz edytować kable i mostki. Pomocnicze automatyczne trasowanie nie zastępuje reguł połączeń.
+Można dodawać, przesuwać, obracać i usuwać moduły oraz edytować kable i mostki. Pomocnicze automatyczne trasowanie nie zastępuje reguł połączeń. Przycisk „Połącz automatycznie” jest wyłącznie narzędziem prototypu; w finalnej wersji gry nie będzie tego przycisku.
 Domyślne sterowanie: WASD — ruch, Spacja — zryw, LPM/PPM — kanały broni, Tab — panel, Esc — ustawienia. F11 przełącza pełny ekran.
 Przypisania klawiszy i przycisków myszy oraz ustawienia audio są zapisywane między uruchomieniami. Konfiguracja statku i stan rozgrywki nie są zapisywane; start zawsze od zestawu początkowego.
 Konsola testowa pozwala zadawać obrażenia, uzupełniać lub opróżniać baterie, naprawiać kadłub i przywracać konfigurację początkową. Naprawa po zniszczeniu statku jest celowym ułatwieniem laboratorium.
 Rozmiary, koszty energii i parametry pracy są robocze. Żółty wskaźnik ma roboczą skalę 0–100 E/s oraz liczbowy odczyt wygładzonego zużycia.
 Brak własnej grafiki sterownika osłon jest tymczasowo rozwiązany ikoną osłon z oznaczeniem C. Mostek jest rysowany przez interfejs. Oryginalne obrazy i muzyka pozostają bez zmian.
 Rozwój kodu odbywa się z użyciem Gita i commitów spójnych etapów. Wymienione wcześniej zasady awansów, kosztów i utraty postępu dotyczą pełnej gry; laboratorium służy testowaniu modułów.
+
+Aktualizacja interfejsu semi_goal: większa arena i siatka statku, bez zewnętrznych marginesów. PPM usuwa moduł lub kable i mostek ze wskazanego pola bez potwierdzenia. Q podnosi moduł spod kursora; LPM odkłada, R obraca, Esc lub PPM anuluje i zachowuje poprzednie położenie. Podczas przenoszenia PPM nie usuwa obiektu spod kursora. Przeniesienie zachowuje ID, ulepszenia, priorytet i ustawienia broni; kable pozostają na swoich polach. Skrót podnoszenia można zmienić w ustawieniach.

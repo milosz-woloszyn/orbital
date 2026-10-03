@@ -62,3 +62,5 @@ Etap 5 — przygotowanie gry
 [ ] Przygotować uruchamialną aplikację na uzgodnione systemy komputerowe.
 
 Kolejność jest propozycją realizacji. Zaznaczone ustalenia oznaczają decyzje projektowe lub istniejące zasoby, nie gotowe mechaniki. Otwarte szczegóły pozostają opisane w assumptions. Wersja semi_goal realizuje osobny zakres laboratorium opisany w pliku semi_goal. Powyższe etapy nadal opisują pełną grę, w tym przyszłe awanse, ekonomię i przeciwników.
+
+Ustalenie interfejsu docelowego: nie udostępniać przycisku „Połącz automatycznie”. W laboratorium semi_goal pozostaje on narzędziem testowym.
