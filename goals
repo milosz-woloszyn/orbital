@@ -16,78 +16,87 @@ Etap 0 — przygotowanie
 [x] Zatwierdzić technologię prototypu: Godot 4 .NET + C#, Linux x86_64.
 [x] Doprecyzować tryby broni, detonację rakiet, mostki kablowe, remisy priorytetów, powrót zasilania, zryw i znaczenie wskaźników energii.
 [x] Potwierdzić jedno darmowe ulepszenie na awans, bez kosztu EXP i materiałów oraz bez zmniejszania postępu poziomu.
-[ ] Doprecyzować pozostałe parametry wymienione w assumptions.
+[x] Dobrać działające wartości robocze pozostałych parametrów; pozostawić możliwość strojenia balansu.
 
-Etap 1 — prototyp walki
-[ ] Statek startujący w dolnej części ekranu, ruch po całym ekranie, klawiatura i mysz oraz ręczne celowanie.
-[ ] Blaster: pojedynczy pocisk po naciśnięciu i powtarzany ostrzał podczas przytrzymania, zgodnie z podstawowym czasem odnowienia.
-[ ] Ciągły napływ przeciwników spoza mapy, stopniowo rosnąca z czasem trudność, bez oddzielnych fal; parametry robocze.
-[ ] Basic lecący ku graczowi i strzelający podstawowym blasterem.
-[ ] Przeciwnik latający horyzontalnie i strzelający wachlarzem pocisków.
-[ ] Rakietowiec celujący w przewidzianą przyszłą pozycję gracza; rakieta leci do ustalonego punktu i detonuje obszarowo po dotarciu.
-[ ] Statek macierzysty z orbitującymi minionami strzelającymi we wszystkich kierunkach; miniony można niszczyć osobno, a śmierć statku macierzystego zabija pozostałe.
-[ ] Przeciwnik strzelający pociskami zataczającymi małe pętle i jednocześnie przesuwającymi się ku graczowi.
-[ ] Wzory ostrzału, kolizje i obrażenia.
-[ ] Nieskończona rozgrywka do śmierci; restart bez zachowania materiałów, EXP, poziomów, zakupionych modułów i ulepszeń.
-[ ] Automatyczne przyznawanie EXP i materiałów po śmierci każdego przeciwnika, także minionów ginących wraz ze statkiem macierzystym; bez zbierania przedmiotów.
-[ ] Jeden zasób materiałów/kasy; pasek postępu poziomu i licznik zasobu na HUD.
+Etap 1 — walka
+[x] Statek startujący w dolnej części ekranu, ruch po całym ekranie, klawiatura i mysz oraz ręczne celowanie.
+[x] Blaster: pojedynczy pocisk po naciśnięciu i powtarzany ostrzał podczas przytrzymania, zgodnie z podstawowym czasem odnowienia.
+[x] Ciągły napływ przeciwników spoza mapy, stopniowo rosnąca z czasem trudność, bez oddzielnych fal; parametry robocze.
+[x] Basic lecący ku graczowi i strzelający podstawowym blasterem.
+[x] Przeciwnik latający horyzontalnie i strzelający wachlarzem pocisków.
+[x] Rakietowiec celujący w przewidzianą przyszłą pozycję gracza; rakieta leci do ustalonego punktu i detonuje obszarowo po dotarciu.
+[x] Statek macierzysty z orbitującymi minionami strzelającymi we wszystkich kierunkach; miniony można niszczyć osobno, a śmierć statku macierzystego zabija pozostałe.
+[x] Przeciwnik strzelający pociskami zataczającymi małe pętle i jednocześnie przesuwającymi się ku graczowi.
+[x] Wzory ostrzału, kolizje i obrażenia.
+[x] Nieskończona rozgrywka do śmierci; restart bez zachowania materiałów, EXP, poziomów, zakupionych modułów i ulepszeń.
+[x] Automatyczne przyznawanie EXP i materiałów po śmierci każdego przeciwnika, także minionów ginących wraz ze statkiem macierzystym; bez zbierania przedmiotów.
+[x] Jeden zasób materiałów/kasy; pasek postępu poziomu i licznik zasobu na HUD.
 
 Etap 2 — panel i konfiguracja statku
-[ ] Awans automatycznie otwiera panel zarządzania i sklep oraz zatrzymuje walkę; zamknięcie wznawia rozgrywkę.
-[ ] Siatka początkowa 18 × 12 kwadratowych pól z modułami różnych rozmiarów i obracaniem; +2 kolumny i +2 wiersze na poziomach 5, 10, 15 itd.
-[ ] Przewijanie zbyt dużej siatki w obu osiach po zbliżeniu kursora do krawędzi panelu.
-[ ] Rozmieszczenie modułów niezależne od wyglądu statku; brak oddzielnego trafiania w moduły.
-[ ] Kable zasilania i sterowania: rozgałęzienia, skrzyżowania, wiele kabli właściwego typu w złączu, zajmowanie pól siatki, brak tras pod modułami i brak kosztu materiałowego.
-[ ] Automatyczne połączenia na skrzyżowaniach kabli tego samego typu; mostki umożliwiające przejście nad innym kablem bez połączenia.
-[ ] Dowodzenie połączone z każdym sterownikiem; sygnał nie przechodzi przez inne moduły. Podzespoły połączone z właściwymi sterownikami, z wyjątkiem niezależnego generatora głównego.
-[ ] Potwierdzony zestaw początkowy: generator główny, jedna bateria, silniki, dowodzenie, sterowanie silnikami, zasilaniem i uzbrojeniem, blaster oraz rakieta.
-[ ] Sklep na każdy awans losuje maksymalnie 3 nowe oferty z puli modułów, po jednym egzemplarzu na ofertę; powtórki i posiadane moduły są dozwolone, można kupić wszystkie oferty za materiały.
-[ ] Jedno darmowe ulepszenie modułu na awans, bez wydawania EXP lub materiałów i bez zmniejszania postępu poziomu; niewykorzystane przepada po zamknięciu panelu.
-[ ] Dodatkowe potwierdzenie zamknięcia panelu przy niewykorzystanym ulepszeniu; anulowanie zachowuje otwarty panel i możliwość ulepszenia.
-[ ] Przypisanie najwyżej jednej broni do LPM i jednej do PPM; przełączanie broni tylko w panelu po awansie.
+[x] Awans automatycznie otwiera panel zarządzania i sklep oraz zatrzymuje walkę; zamknięcie wznawia rozgrywkę.
+[x] Siatka początkowa 18 × 12 kwadratowych pól z modułami różnych rozmiarów i obracaniem; +2 kolumny i +2 wiersze na poziomach 5, 10, 15 itd.
+[x] Przewijanie zbyt dużej siatki w obu osiach po zbliżeniu kursora do krawędzi panelu.
+[x] Rozmieszczenie modułów niezależne od wyglądu statku; brak oddzielnego trafiania w moduły.
+[x] Kable zasilania i sterowania: rozgałęzienia, skrzyżowania, wiele kabli właściwego typu w złączu, zajmowanie pól siatki, brak tras pod modułami i brak kosztu materiałowego.
+[x] Automatyczne połączenia na skrzyżowaniach kabli tego samego typu; mostki umożliwiające przejście nad innym kablem bez połączenia.
+[x] Dowodzenie połączone z każdym sterownikiem; sygnał nie przechodzi przez inne moduły. Podzespoły połączone z właściwymi sterownikami, z wyjątkiem niezależnego generatora głównego.
+[x] Potwierdzony zestaw początkowy: generator główny, jedna bateria, silniki, dowodzenie, sterowanie silnikami, zasilaniem i uzbrojeniem, blaster oraz rakieta.
+[x] Sklep na każdy awans losuje maksymalnie 3 nowe oferty z puli modułów, po jednym egzemplarzu na ofertę; powtórki i posiadane moduły są dozwolone, można kupić wszystkie oferty za materiały.
+[x] Jedno darmowe ulepszenie modułu na awans, bez wydawania EXP lub materiałów i bez zmniejszania postępu poziomu; niewykorzystane przepada po zamknięciu panelu.
+[x] Dodatkowe potwierdzenie zamknięcia panelu przy niewykorzystanym ulepszeniu; anulowanie zachowuje otwarty panel i możliwość ulepszenia.
+[x] Przypisanie najwyżej jednej broni do LPM i jednej do PPM; przełączanie broni tylko w panelu po awansie.
 
 Etap 3 — energia i zależności modułów
-[ ] Produkcja energii, aktywne zużycie i zapas zwiększany bateriami; wykorzystanie zapasu przed wyłączaniem modułów.
-[ ] Zielony pasek zapasu baterii na dole HUD oraz żółty wskaźnik bieżącego zużycia energii na sekundę z wartością liczbową.
-[ ] Priorytety ustawiane przez gracza w zakresie 1–10; kolejne odłączenia od najniższego aż do pokrycia zapotrzebowania.
-[ ] Przy równym priorytecie odłączanie najpierw modułu z najdłuższą trasą kabla do najbliższego źródła, wliczając baterie; przy pełnym remisie odłączenie całej remisującej grupy.
-[ ] Automatyczny powrót zasilania od najwyższych priorytetów bez oczekiwania na dodatkowy zapas; dopuszczalne miganie przy granicznym zasilaniu.
-[ ] Generatory awaryjne próbują pokryć niedobór przed odłączeniami; gotowe egzemplarze włączają się jednocześnie, działają krótko i wymagają odnowienia.
-[ ] Generator sprzężenia zwrotnego daje energię po trafieniu statku, również w osłonę.
-[ ] Moduły energii bez własnego zużycia prądu; główny generator niezależny od sterowania, pozostałe wymagają sterownika zasilania.
-[ ] Sterowniki zużywają energię tylko podczas działania podzespołów; utrata dowodzenia blokuje sterowanie, pasywny ostrzał i ładowanie osłon.
+[x] Produkcja energii, aktywne zużycie i zapas zwiększany bateriami; wykorzystanie zapasu przed wyłączaniem modułów.
+[x] Zielony pasek zapasu baterii na dole HUD oraz żółty wskaźnik bieżącego zużycia energii na sekundę z wartością liczbową.
+[x] Priorytety ustawiane przez gracza w zakresie 1–10; kolejne odłączenia od najniższego aż do pokrycia zapotrzebowania.
+[x] Przy równym priorytecie odłączanie najpierw modułu z najdłuższą trasą kabla do najbliższego źródła, wliczając baterie; przy pełnym remisie odłączenie całej remisującej grupy.
+[x] Automatyczny powrót zasilania od najwyższych priorytetów bez oczekiwania na dodatkowy zapas; dopuszczalne miganie przy granicznym zasilaniu.
+[x] Generatory awaryjne próbują pokryć niedobór przed odłączeniami; gotowe egzemplarze włączają się jednocześnie, działają krótko i wymagają odnowienia.
+[x] Generator sprzężenia zwrotnego daje energię po trafieniu statku, również w osłonę.
+[x] Moduły energii bez własnego zużycia prądu; główny generator niezależny od sterowania, pozostałe wymagają sterownika zasilania.
+[x] Sterowniki zużywają energię tylko podczas działania podzespołów; utrata dowodzenia blokuje sterowanie, pasywny ostrzał i ładowanie osłon.
 
 Etap 4 — rozwinięcie napędu i walki
-[ ] Dodatkowe silniki zwiększające prędkość, dryf bez sterowania silnikami.
-[ ] Zryw w kierunku wskazanym klawiszami, a przy braku kierunku w stronę kursora; obsługiwany przez sterownik silników, za energię, bez odnowienia i bez odporności na obrażenia; brak możliwości rozpoczęcia kolejnego przed końcem bieżącego.
-[ ] Każda broń może działać aktywnie lub pasywnie. Pasywna seria działa jak przytrzymanie przycisku i respektuje podstawowe tempo strzałów; czas serii zero oznacza ciągły ostrzał.
-[ ] Pasywne serie z celowaniem właściwym dla rodzaju broni: czas serii i przerwy ustawiane bez narzuconych ograniczeń, przerwa liczona od końca skończonej serii, restart cyklu po odzyskaniu zasilania.
-[ ] Rakieta zapamiętująca punkt kursora przy wystrzale, detonacja po trafieniu przeciwnika lub po dotarciu do celu i obrażenia dla wszystkich przeciwników w zasięgu.
-[ ] Osobny sterownik otrzymywany wraz z modułem osłon; ładowanie osłon za energię również podczas otrzymywania obrażeń, osłony przed życiem, nadmiar obrażeń przechodzi na życie.
-[ ] Generator awaryjny, generator sprzężenia zwrotnego, silniki zrywu i osłony dostępne wyłącznie przez zakup.
-[ ] Rakieta od statku stale podążająca za aktualnym kursorem; wybuch po trafieniu przeciwnika albo dotarciu do kursora.
-[ ] Laser z ciągłą wiązką aktualizującą kierunek kursora i rażącą wszystkich przeciwników na linii strzału.
-[ ] Blaster wachlarzowy ze środkiem wachlarza skierowanym ku kursorowi.
-[ ] Nieruchoma bomba stawiana w pozycji gracza, detonująca po krótkim czasie i raniąca wyłącznie przeciwników.
-[ ] Pocisk samonaprowadzający na najbliższego przeciwnika, wyszukujący kolejnego po śmierci celu; doprecyzować zachowanie przy braku celów.
-[ ] Dobrać robocze parametry modułów, broni, nagród i przeciwników do testów walki.
+[x] Dodatkowe silniki zwiększające prędkość, dryf bez sterowania silnikami.
+[x] Zryw w kierunku wskazanym klawiszami, a przy braku kierunku w stronę kursora; obsługiwany przez sterownik silników, za energię, bez odnowienia i bez odporności na obrażenia; brak możliwości rozpoczęcia kolejnego przed końcem bieżącego.
+[x] Każda broń może działać aktywnie lub pasywnie. Pasywna seria działa jak przytrzymanie przycisku i respektuje podstawowe tempo strzałów; czas serii zero oznacza ciągły ostrzał.
+[x] Pasywne serie z celowaniem właściwym dla rodzaju broni: czas serii i przerwy ustawiane bez narzuconych ograniczeń, przerwa liczona od końca skończonej serii, restart cyklu po odzyskaniu zasilania.
+[x] Rakieta zapamiętująca punkt kursora przy wystrzale, detonacja po trafieniu przeciwnika lub po dotarciu do celu i obrażenia dla wszystkich przeciwników w zasięgu.
+[x] Osobny sterownik otrzymywany wraz z modułem osłon; ładowanie osłon za energię również podczas otrzymywania obrażeń, osłony przed życiem, nadmiar obrażeń przechodzi na życie.
+[x] Generator awaryjny, generator sprzężenia zwrotnego, silniki zrywu i osłony dostępne wyłącznie przez zakup.
+[x] Rakieta od statku stale podążająca za aktualnym kursorem; wybuch po trafieniu przeciwnika albo dotarciu do kursora.
+[x] Laser z ciągłą wiązką aktualizującą kierunek kursora i rażącą wszystkich przeciwników na linii strzału.
+[x] Blaster wachlarzowy ze środkiem wachlarza skierowanym ku kursorowi.
+[x] Nieruchoma bomba stawiana w pozycji gracza, detonująca po krótkim czasie i raniąca wyłącznie przeciwników.
+[x] Pocisk samonaprowadzający na najbliższego przeciwnika, wyszukujący kolejnego po śmierci celu; przy braku celów leci dalej, szuka kolejnego i wygasa po 9 s.
+[x] Dobrać robocze parametry modułów, broni, nagród i przeciwników do testów walki.
 
 Etap 5 — przygotowanie gry
-[ ] Dopasować zaakceptowane grafiki do wybranego silnika i docelowych rozmiarów modułów.
-[ ] Przy przyszłym uzupełnianiu zasobów przygotować grafikę osobnego sterownika osłon i mostka kablowego.
-[ ] Ustalić parametry i balans, czytelność pocisków oraz wydajność przy dużej liczbie obiektów.
-[ ] Przygotować uruchamialną aplikację na uzgodnione systemy komputerowe.
+[x] Dopasować zaakceptowane grafiki do wybranego silnika i docelowych rozmiarów modułów.
+[x] Dodać osobne ikony pięciu broni i sterownika osłon; zachować widoczny mostek rysowany przez interfejs.
+[x] Dobrać roboczy balans, wyróżnić wrogie pociski i strefy rakiet, sprawdzić gęsty ostrzał.
+[x] Przygotować uruchamialną aplikację na uzgodnione systemy komputerowe.
 
-Kolejność jest propozycją realizacji. Zaznaczone ustalenia oznaczają decyzje projektowe lub istniejące zasoby, nie gotowe mechaniki. Otwarte szczegóły pozostają opisane w assumptions. Wersja semi_goal realizuje osobny zakres laboratorium opisany w pliku semi_goal. Powyższe etapy nadal opisują pełną grę, w tym przyszłe awanse, ekonomię i przeciwników.
+Status 2026-10-04: zakres pełnej gry zrealizowany. Zaznaczenia etapów 1–5 oznaczają zaimplementowane mechaniki. Balans liczbowy jest roboczy i może być dostrajany po graniu. Laboratorium pozostaje osobnym trybem opisanym w semi_goal.
 
 Ustalenie interfejsu docelowego: nie udostępniać przycisku „Połącz automatycznie”. W laboratorium semi_goal pozostaje on narzędziem testowym.
 
 Doprecyzowanie kabli danych: osobna sieć dowodzenia oraz oddzielne sieci napędu, energii, uzbrojenia i osłon; sterowniki mają oddzielne wejście i wyjście. Mieszanie różnych sieci jest blokowane, skrzyżowania przez mostki pozostają dostępne. Prototyp używa siatki 18 × 12 pól.
 
 Przeniesienie wersji testowej do gry docelowej
-[ ] Zachować wszystkie poprawki funkcjonalne i interfejsowe prototypu, w tym pełny ekran, brak zewnętrznych marginesów, większą arenę i siatkę oraz boczne panele.
-[ ] Zachować usuwanie PPM, podnoszenie Q, odkładanie LPM, obrót R i anulowanie Esc/PPM, bez utraty ustawień modułu; konfigurowalne skróty i zapis ustawień sterowania/audio.
-[ ] Zachować rozdzielone sieci danych, osobne wejścia i wyjścia sterowników, kolory kabli, mostki oraz odrzucanie nieprawidłowych połączeń.
-[ ] Zintegrować te poprawki z ekonomią i awansami. Testowe darmowe zakupy i nieograniczone ulepszenia nie zastępują docelowych reguł. Zgodnie z wcześniejszym ustaleniem usunąć przycisk „Połącz automatycznie” z finalnej gry.
+[x] Zachować wszystkie poprawki funkcjonalne i interfejsowe prototypu, w tym pełny ekran, brak zewnętrznych marginesów, większą arenę i siatkę oraz boczne panele.
+[x] Zachować usuwanie PPM, podnoszenie Q, odkładanie LPM, obrót R i anulowanie Esc/PPM, bez utraty ustawień modułu; konfigurowalne skróty i zapis ustawień sterowania/audio.
+[x] Zachować rozdzielone sieci danych, osobne wejścia i wyjścia sterowników, kolory kabli, mostki oraz odrzucanie nieprawidłowych połączeń.
+[x] Zintegrować te poprawki z ekonomią i awansami. Testowe darmowe zakupy i nieograniczone ulepszenia nie zastępują docelowych reguł. Zgodnie z wcześniejszym ustaleniem usunąć przycisk „Połącz automatycznie” z finalnej gry.
 
-Nowe pozycje dotyczą przyszłej implementacji. Aktualizacja assumptions i goals nie oznacza zmiany kodu ani gotowej aplikacji.
+Weryfikacja i dostarczenie
+[x] 51 testów modelu: sieci, energia, moduły, bronie, przeciwnicy, sklep, nagrody, wzrost siatki i restart.
+[x] Scenariusz interfejsu laboratorium oraz osobny scenariusz pełnej gry: faktyczne trafienia i nagrody, pauza, zakupy, bezpłatne ulepszenie, potwierdzenie pominięcia, magazyn, przewijanie, śmierć i nowy lot.
+[x] Próba 180 sekund symulowanego ciągłego napływu oraz gęsty ostrzał: 80 przeciwników, szczyt 961 pocisków. Pomiar dotyczy logiki, nie liczby klatek renderowania.
+[x] Kompilacja bez ostrzeżeń, kontrola zrzutów interfejsu i niezależny pakiet Linux x86_64.
+[x] Oba scenariusze UI powtórzone w wyeksportowanej aplikacji uruchomionej spoza projektu, bez edytora i SDK .NET.
+[x] Zachowanie pierwotnej paczki laboratorium i źródeł pod tagiem laboratory-before-survival.
+
+Uruchomienie i testy: README.txt. Reguły oraz robocze decyzje wykonawcze: assumptions.
+Dalsze strojenie trudności po graniu jest pracą nad balansem, nie brakującą mechaniką.

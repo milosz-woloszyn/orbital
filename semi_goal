@@ -47,3 +47,11 @@ Aktualny zakres sieci danych
 - Błędne połączenia są blokowane, a nie zapisywane jako niedziałający układ.
 
 Weryfikacja sieci: 38/38 testów modelu. Test interfejsu potwierdza odrzucenie obcej sieci bez zmiany układu, niezależność napędu i broni, połączenie właściwych portów, skrzyżowanie danych na mostku, blokadę usuwania używanego mostka oraz montaż na nowych polach siatki.
+
+Zachowanie wersji testowej przy realizacji pełnej gry (2026-10-04)
+- W menu wybierz „Laboratorium / wersja testowa” albo uruchom ./run.sh -- --lab.
+- Zachowane są pusta arena, darmowy katalog, nieograniczone ulepszenia, narzędzia testowe i automatyczne łączenie.
+- Katalog zawiera także pięć nowych broni, łącznie 19 modułów. Walka i ekonomia pełnej gry są wyłączone w tym trybie.
+- Dokładne wcześniejsze źródła: tag Git laboratory-before-survival. Niezmieniona wcześniejsza aplikacja: build/Orbital-semi_goal-linux-x86_64.tar.gz.
+- build/linux zawiera teraz wspólną aplikację z menu wyboru obu trybów. Nowa paczka: build/Orbital-linux-x86_64.tar.gz.
+- Aktualna regresja: 51 testów modelu i dwa scenariusze interfejsu (laboratorium oraz pełna gra), również w samodzielnej aplikacji spoza projektu bez SDK.

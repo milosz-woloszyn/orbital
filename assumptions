@@ -1,5 +1,5 @@
 ZAŁOŻENIA GRY
-Status: wstępny projekt z uwzględnieniem decyzji użytkownika.
+Status: zrealizowany zakres pełnej gry i zachowane laboratorium, 2026-10-04. Liczby balansu pozostają robocze; decyzje wykonawcze opisuje punkt 10.
 
 1. Gatunek i walka
 Gra typu bullet hell w kosmosie. Mały statek gracza rozpoczyna w dolnej części ekranu, ale może poruszać się po całym ekranie. Przedziera się przez hordy przeciwników oraz bardzo liczne pociski.
@@ -44,7 +44,7 @@ Sieci wyjściowe są rozdzielone według systemów: napęd (silniki i zryw), uzb
 Nie wolno łączyć danych różnych systemów ani danych dowodzenia z danymi systemu. Próba takiego połączenia pokazuje błąd i zostaje odrzucona bez zmiany istniejącej instalacji. Mostki umożliwiają niezależne skrzyżowania tych sieci. Wejście i wyjście sterownika nie są wewnętrznym mostkiem kablowym; podzespół wymaga działającego sterownika i jego połączenia z dowodzeniem.
 Skrzyżowanie kabli tego samego typu automatycznie łączy je w sieć.
 Mostek kablowy pozwala przeprowadzić kabel ponad innym kablem, bez połączenia ich sieci. Jest elementem prowadzenia kabli; nie znosi zakazu prowadzenia kabla pod modułem.
-Dokładne wymiary i rozmieszczenie złączy pozostają do ustalenia.
+Wymiary i rozmieszczenie złączy są zdefiniowane w Domain/Model.cs i pokazane w panelu statku; można je dalej stroić.
 
 3.2. Energia, HUD i priorytety
 Generatory produkują energię. Moduły odbiorcze zużywają ją aktywnie, np. podczas strzelania i przemieszczania się.
@@ -111,7 +111,7 @@ Dodatkowe bronie (nie zmieniają potwierdzonego zestawu początkowego):
 - Blaster wachlarzowy: wystrzeliwuje wachlarz pocisków, którego środek jest skierowany w stronę kursora.
 - Bomba: zostaje w miejscu, w którym znajdował się gracz przy jej postawieniu, i wybucha po krótkim czasie. Jest nieruchoma i rani wyłącznie przeciwników.
 - Pocisk samonaprowadzający: wybiera najbliższego przeciwnika i naprowadza się na niego podczas lotu. Jeśli cel zginie, wyszukuje kolejnego przeciwnika.
-Parametry broni, w tym obrażenia, koszt energii, tempo ostrzału, zasięg i czasy działania, pozostają robocze. Zachowanie pocisku samonaprowadzającego przy braku jakiegokolwiek celu wymaga ustalenia.
+Parametry broni, w tym obrażenia, koszt energii, tempo ostrzału, zasięg i czasy działania, pozostają robocze. Roboczo pocisk bez celu leci dalej i szuka nowego celu; znika po 9 sekundach lub opuszczeniu obszaru symulacji.
 
 3.7. Osłony
 Moduł osłon jest wyłącznie do kupienia i wymaga sterownika osłon, otrzymywanego wraz z tym modułem.
@@ -132,33 +132,33 @@ Odrębny sterownik osłon gracz otrzymuje wraz z modułem osłon.
 Użytkownik zaakceptował wszystkie dotychczas przygotowane grafiki, w tym bazowy arkusz oraz podpisane plansze w graphics/moduly-v02. Ich styl pixel art jest docelowym kierunkiem graficznym.
 Baza obejmuje gracza, przykładowych przeciwników, pociski, moduły i elementy interfejsu.
 Pliki graficzne znajdują się w graphics.
-Nowe podpisane plansze modułów, kabli i HUD znajdują się w graphics/moduly-v02. Zawierają 13 opisanych modułów, przykład ustawienia priorytetu, dwa rodzaje kabli i zielony pasek energii. Wymiary, rozmieszczenie detali i wyróżniony priorytet na ilustracjach nie ustalają wartości mechanicznych. Osobny sterownik osłon oraz mostek kablowy nie mają jeszcze własnych grafik; sterownik nie jest tym samym modułem co przedstawiony emiter osłon.
+Nowe podpisane plansze modułów, kabli i HUD znajdują się w graphics/moduly-v02. Zawierają 13 opisanych modułów, przykład ustawienia priorytetu, dwa rodzaje kabli i zielony pasek energii. Wymiary, rozmieszczenie detali i wyróżniony priorytet na ilustracjach nie ustalają wartości mechanicznych. Sterownik osłon ma teraz osobną ikonę w Assets/Modules, a mostek jest rysowany przez interfejs; sterownik nie jest tym samym modułem co emiter osłon.
 Akceptacja stylu nie ustala ostatecznej listy jednostek, modułów ani ich mechanik; potwierdzone zasady są opisane w punkcie 3.
 
 5. Platforma i przebieg rozgrywki
 Gra działa jako aplikacja na Linux x86_64. Użytkownik zatwierdził Godot 4 .NET + C# do realizacji wersji testowej.
-Zatwierdzona technologia: Godot 4 w wersji .NET oraz C# do logiki gry. Wersja testowa używa Godota 4.5.2 .NET i SDK .NET 8. Uzasadnienie: narzędzia 2D i interfejsu do pixel artu, panelu siatki i HUD; C# do rozbudowanej logiki modułów, sieci i pocisków. Wydajność gęstego ostrzału trzeba zweryfikować pomiarami prototypu.
+Zatwierdzona technologia: Godot 4 w wersji .NET oraz C# do logiki gry. Wersja testowa używa Godota 4.5.2 .NET i SDK .NET 8. Uzasadnienie: narzędzia 2D i interfejsu do pixel artu, panelu siatki i HUD; C# do rozbudowanej logiki modułów, sieci i pocisków. Testy obejmują długi napływ przeciwników i gęsty ostrzał; wyniki opisuje goals.
 Dokumentacja: https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/index.html ; https://docs.godotengine.org/en/stable/tutorials/2d/introduction_to_2d.html ; https://docs.godotengine.org/en/stable/tutorials/ui/index.html
 Rozgrywka jest nieskończona i trwa do śmierci gracza.
 Po śmierci gracz nie zachowuje nic z rozgrywki: materiałów, EXP, poziomów, zakupionych modułów ani ulepszeń. Kolejna rozgrywka zaczyna się od stanu początkowego, bez trwałego rozwoju.
 
 6. Dalsze ustalenia
 Mechanika modułów, energii i uzbrojenia oraz kolejne odpowiedzi i doprecyzowania użytkownika są ujęte w punkcie 3. Użytkownik dostarczy później dalsze szczegóły modułów, przeciwników i broni. Pytania dotyczące nieustalonych reguł znajdują się w punkcie 7.
-Wersja testowa uruchamia się na pełnym ekranie. Interfejs bazowy 1440 × 900 rozszerza się do proporcji ekranu bez pustych pasów i zewnętrznych marginesów; boczne panele zachowują szerokość. Przypisania sterowania są zmieniane i zapisywane przez gracza, a konfiguracja statku nie jest zapisywana. Dalsze platformy i zapis rozgrywki docelowej pozostają do ustalenia.
-Obecny etap obejmuje działający prototyp semi_goal na pustej arenie. Zakres i wyjątki testowe opisuje punkt 8 oraz plik semi_goal.
+Wersja testowa uruchamia się na pełnym ekranie. Interfejs bazowy 1440 × 900 rozszerza się do proporcji ekranu bez pustych pasów i zewnętrznych marginesów; boczne panele zachowują szerokość. Przypisania sterowania są zmieniane i zapisywane przez gracza, a konfiguracja statku nie jest zapisywana. Obecna pełna gra również działa na Linuksie i nie zapisuje trwającego lotu.
+Obecny etap obejmuje pełną grę: walkę, awanse, sklep, wszystkie moduły i pięć typów przeciwników. Laboratorium na pustej arenie pozostaje osobnym trybem; jego wyjątki opisuje punkt 8 oraz plik semi_goal.
 
-7. Pozostałe ustalenia przed implementacją
+7. Parametry robocze i możliwy dalszy rozwój
 Poprzednie pytania o tryby broni, rakiety, skrzyżowania kabli, remisy priorytetów, powrót zasilania, zryw i znaczenie wskaźników HUD zostały rozstrzygnięte w punkcie 3.
 
-Do ustalenia w kolejnych etapach:
+Działająca wersja ma komplet wartości roboczych. Dalszego strojenia po graniu mogą wymagać:
 - Ewentualne dalsze platformy i docelowe warianty interfejsu poza zatwierdzonym prototypem Linux.
 - Progi awansu, ceny modułów, wartości nagród i ewentualny zapis trwającej rozgrywki.
 - Docelowe wymiary modułów, rozmieszczenie portów oraz szczegółowe parametry mostka i ewentualne limity długości/przepustowości kabli. Początkowa siatka ma 18 × 12 pól. Przyrost +2 kolumny i +2 wiersze co 5 poziomów jest ustalony.
 - Wartości produkcji, pojemności i zużycia energii; parametry ruchu, uzbrojenia, osłon, ulepszeń i przeciwników.
-- Zachowanie pocisku samonaprowadzającego, gdy brak celu, oraz szczegółowy balans pięciu typów przeciwników i pięciu dodatkowych broni.
+- Szczegółowy balans pięciu typów przeciwników i siedmiu broni; zachowanie pocisku bez celu opisuje punkt 3.6.
 - Dokładne skalowanie żółtego wskaźnika zużycia energii na sekundę względem prezentacji zielonego zapasu baterii.
 
-Powyższe szczegóły nie zmieniają już potwierdzonych zasad. Parametry użyte w prototypie są robocze.
+Powyższe szczegóły nie blokują implementacji i nie zmieniają potwierdzonych zasad. Parametry użyte w grze są robocze; ich lokalizację w kodzie podaje README.txt.
 
 8. Wersja testowa semi_goal — zatwierdzony wyjątek od reguł pełnej gry
 Pusta arena bez przeciwników z działającym ruchem, blasterem, rakietą, energią, osłonami i zrywem po zamontowaniu właściwych modułów.
@@ -169,7 +169,7 @@ Domyślne sterowanie: WASD — ruch, Spacja — zryw, LPM/PPM — kanały broni,
 Przypisania klawiszy i przycisków myszy oraz ustawienia audio są zapisywane między uruchomieniami. Konfiguracja statku i stan rozgrywki nie są zapisywane; start zawsze od zestawu początkowego.
 Konsola testowa pozwala zadawać obrażenia, uzupełniać lub opróżniać baterie, naprawiać kadłub i przywracać konfigurację początkową. Naprawa po zniszczeniu statku jest celowym ułatwieniem laboratorium.
 Rozmiary, koszty energii i parametry pracy są robocze. Żółty wskaźnik ma roboczą skalę 0–100 E/s oraz liczbowy odczyt wygładzonego zużycia.
-Brak własnej grafiki sterownika osłon jest tymczasowo rozwiązany ikoną osłon z oznaczeniem C. Mostek jest rysowany przez interfejs. Oryginalne obrazy i muzyka pozostają bez zmian.
+Sterownik osłon ma własną ikonę, podobnie jak pięć dodatkowych broni (Assets/Modules). Mostek jest rysowany przez interfejs. Oryginalne obrazy i muzyka pozostają bez zmian.
 Rozwój kodu odbywa się z użyciem Gita i commitów spójnych etapów. Wymienione wcześniej zasady awansów, kosztów i utraty postępu dotyczą pełnej gry; laboratorium służy testowaniu modułów.
 
 Aktualizacja interfejsu semi_goal: większa arena i siatka statku, bez zewnętrznych marginesów. PPM usuwa moduł lub kable i mostek ze wskazanego pola bez potwierdzenia. Q podnosi moduł spod kursora; LPM odkłada, R obraca, Esc lub PPM anuluje i zachowuje poprzednie położenie. Podczas przenoszenia PPM nie usuwa obiektu spod kursora. Przeniesienie zachowuje ID, ulepszenia, priorytet i ustawienia broni; kable pozostają na swoich polach. Skrót podnoszenia można zmienić w ustawieniach.
@@ -179,4 +179,16 @@ Aktualizacja sieci: siatka prototypu ma 18 × 12 pól (216 zamiast 160). Oddziel
 9. Przeniesienie poprawek prototypu do docelowej gry
 Wszystkie poprawki funkcjonalne i interfejsowe wypracowane w wersji testowej mają znaleźć się w docelowej grze. Dotyczy to pełnego ekranu, wykorzystania przestrzeni bez zewnętrznych marginesów, większej areny i siatki, edycji przez PPM oraz Q/LPM/R/Esc, zachowywania ustawień przenoszonego modułu, konfigurowalnego sterowania i audio, a także oddzielnych sieci danych z diagnostyką oraz mostkami.
 Rozwiązania testowe opisane w punkcie 8 nie zastępują reguł rozgrywki docelowej: zakupów i limitu ulepszeń po awansie, nagród za walkę oraz końca rozgrywki po śmierci. Obowiązuje wcześniej uzgodniony wyjątek: przycisku „Połącz automatycznie” nie będzie w finalnej wersji.
-Nowe ustalenia o przeciwnikach, ekonomii, rozwoju siatki i broniach stanowią zakres przyszłej implementacji. Ich zapis w tym dokumencie nie oznacza, że zostały już dodane do działającej aplikacji.
+Poprawki zostały przeniesione do pełnej gry. Przyciski testowe i automatyczne łączenie pozostają wyłącznie w laboratorium.
+
+10. Decyzje wykonawcze pełnej wersji — wartości robocze
+- Menu udostępnia nową rozgrywkę, zachowane laboratorium, ustawienia i wyjście. Nowa rozgrywka zeruje cały postęp; ustawienia sterowania i audio pozostają zapisane.
+- Pełna gra ma 19 rodzajów modułów, w tym 7 broni, oraz 5 typów przeciwników i miniony eskorty. Wszystkie moduły są także dostępne do swobodnych testów w laboratorium.
+- Kupiony moduł trafia do magazynu. Usunięty z siatki wraca do magazynu bez zwrotu materiałów. Zachowuje ulepszenia, priorytet, konfigurację oraz zapas baterii/osłony, więc demontaż nie daje darmowego ładowania. Montaż nie zabiera samoczynnie zajętego kanału broni.
+- Ulepszenie dotyczy jednego zamontowanego modułu. Jeśli nagroda daje kilka poziomów naraz, każdy awans ma kolejno osobny sklep i darmowe ulepszenie. Nadmiar EXP nie przepada.
+- Przy wejściu do stoczni po awansie znikają wrogie pociski, aby powrót nie kończył się natychmiastowym trafieniem. Pozycje przeciwników pozostają zachowane. Czas walki nie płynie w stoczni ani ustawieniach.
+- Wrogie pociski mają czerwone lub fioletowe obwódki, a cel rakiety przeciwnika jest zaznaczony czerwonym okręgiem. Środek statku oznacza mały obszar trafienia. Po trafieniu działa 0,09 s ochrony przed nałożeniem wielu obrażeń w tej samej chwili; zryw sam w sobie nie daje odporności i sprawdzana jest cała przebyta droga.
+- Typy przeciwników wchodzą do puli co 13 s; wszystkie pięć jest możliwe po 52 s. Napływ przyspiesza, rośnie zdrowie przeciwników i tempo ostrzału. Limit aktywnych statków oraz czas życia pocisków chronią wydajność; nie ma końca ani podziału na fale.
+- Próg kolejnego poziomu: 45 + 18 × (obecny poziom − 1) EXP. Ceny i nagrody definiują Domain/RunProgress.cs oraz Domain/CombatWorld.cs. Parametry modułów i broni definiuje Domain/Model.cs.
+- Ulepszenie zwiększa właściwy parametr modułu (np. obrażenia, produkcję, pojemność lub napęd). Dla dowodzenia i sterowników zmniejsza zużycie energii podczas pracy. Przyrost skali to 20% wartości bazowej na poziom; nie zwiększa tempa strzelania ponad podstawowy cooldown.
+- Poprzednie źródła laboratorium zachowuje tag Git laboratory-before-survival. Poprzednia paczka build/Orbital-semi_goal-linux-x86_64.tar.gz pozostaje nietknięta. Bieżące laboratorium korzysta ze wspólnych poprawek oraz nowych broni.
