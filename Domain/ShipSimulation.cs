@@ -328,7 +328,7 @@ public sealed class ShipSimulation
                     {
                         double balance = plan.Production.GetValueOrDefault(island) - plan.Loads.Where(p => power.IslandOf(p.Key) == island).Sum(p => p.Value);
                         double addedControlCost = (Dependencies(module, enabled) ?? new List<int>())
-                            .Where(id => power.IslandOf(id) == island && !plan.Loads.ContainsKey(id)).Sum(id => Layout.Find(id)!.Definition.Consumption);
+                            .Where(id => power.IslandOf(id) == island && !plan.Loads.ContainsKey(id)).Sum(id => (Layout.Find(id)!.Definition.Consumption / Layout.Find(id)!.UpgradeFactor));
                         if (balance < -Epsilon && runtime[module.Id].Energy > Epsilon ||
                             balance > addedControlCost + Epsilon && runtime[module.Id].Energy < module.Definition.Capacity * module.UpgradeFactor - Epsilon)
                         { plan.Acting.Add(module.Id); Service(module); }
@@ -342,7 +342,7 @@ public sealed class ShipSimulation
         {
             foreach (int id in Dependencies(module, enabled) ?? new List<int>())
             {
-                plan.Loads[id] = Layout.Find(id)!.Definition.Consumption;
+                plan.Loads[id] = (Layout.Find(id)!.Definition.Consumption / Layout.Find(id)!.UpgradeFactor);
                 plan.Acting.Add(id);
             }
         }

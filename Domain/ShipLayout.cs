@@ -11,12 +11,17 @@ public sealed class ShipLayout
         if (width < 1 || height < 1) throw new ArgumentOutOfRangeException(nameof(width));
         Width = width; Height = height;
     }
-    public int Width { get; }
-    public int Height { get; }
+    public int Width { get; private set; }
+    public int Height { get; private set; }
     public int Revision { get; private set; }
     public IReadOnlyList<ShipModule> Modules => modules.AsReadOnly();
     public IReadOnlyCollection<WireTile> Wires => wires.Values;
     public IReadOnlyCollection<Cell> Bridges => bridges.ToArray();
+    public void Grow(int columns, int rows)
+    {
+        if(columns<0 || rows<0)throw new ArgumentOutOfRangeException(nameof(columns));
+        Width=checked(Width+columns);Height=checked(Height+rows);Revision++;
+    }
     public bool Contains(Cell cell) => cell.X >= 0 && cell.Y >= 0 && cell.X < Width && cell.Y < Height;
     public ShipModule? ModuleAt(Cell cell) => modules.FirstOrDefault(m => m.Cells.Contains(cell));
     public ShipModule? Find(int id) => modules.FirstOrDefault(m => m.Id == id);

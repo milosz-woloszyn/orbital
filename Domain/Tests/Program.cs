@@ -40,7 +40,7 @@ var tests = new (string, Action)[]
     ("Routes can pass alongside incompatible terminals without touching", PassAlongsideTerminal),
     ("Starter addon geometry can be routed and remains operational", StarterAddons),
     ("Main generator exposes only power and runs without data or controllers", GeneratorPowerOnly),
-};
+}.Concat(CombatTests.All).ToArray();
 int failed = 0;
 foreach (var (name, test) in tests)
 {

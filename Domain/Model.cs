@@ -12,7 +12,7 @@ public enum WireKind { Power, Control, EngineData, PowerData, WeaponData, Shield
 public enum ModuleKind
 {
     Generator, Battery, Emergency, Feedback, Engine, Dash, Command,
-    EngineControl, PowerControl, WeaponControl, ShieldControl, Blaster, Rocket, Shield
+    EngineControl, PowerControl, WeaponControl, ShieldControl, Blaster, Rocket, Shield, GuidedRocket, Laser, FanBlaster, Bomb, Seeker
 }
 public enum WeaponMode { Left, Right, Passive, Unassigned }
 public enum ModuleState { Idle, Active, NoPower, NoControl, Shed }
@@ -50,7 +50,7 @@ public sealed record ModuleDefinition(
     double Duration = 0, double Cooldown = 0, double ShieldCapacity = 0,
     double ShieldRecharge = 0, double FeedbackEnergy = 0)
 {
-    public bool IsWeapon => Kind is ModuleKind.Blaster or ModuleKind.Rocket;
+    public bool IsWeapon => Kind is ModuleKind.Blaster or ModuleKind.Rocket or ModuleKind.GuidedRocket or ModuleKind.Laser or ModuleKind.FanBlaster or ModuleKind.Bomb or ModuleKind.Seeker;
     public bool IsController => Kind is ModuleKind.EngineControl or ModuleKind.PowerControl
         or ModuleKind.WeaponControl or ModuleKind.ShieldControl;
     public bool IsEnergy => Kind is ModuleKind.Generator or ModuleKind.Battery or ModuleKind.Emergency or ModuleKind.Feedback;
@@ -58,7 +58,7 @@ public sealed record ModuleDefinition(
     {
         ModuleKind.Battery or ModuleKind.Emergency or ModuleKind.Feedback => ModuleKind.PowerControl,
         ModuleKind.Engine or ModuleKind.Dash => ModuleKind.EngineControl,
-        ModuleKind.Blaster or ModuleKind.Rocket => ModuleKind.WeaponControl,
+        ModuleKind.Blaster or ModuleKind.Rocket or ModuleKind.GuidedRocket or ModuleKind.Laser or ModuleKind.FanBlaster or ModuleKind.Bomb or ModuleKind.Seeker => ModuleKind.WeaponControl,
         ModuleKind.Shield => ModuleKind.ShieldControl,
         ModuleKind.EngineControl or ModuleKind.PowerControl or ModuleKind.WeaponControl or ModuleKind.ShieldControl => ModuleKind.Command,
         _ => null
@@ -82,7 +82,12 @@ public static class ModuleCatalog
         new ModuleDefinition(ModuleKind.ShieldControl, "Shield controller", 1, 1, Consumption: 2),
         new ModuleDefinition(ModuleKind.Blaster, "Blaster", 1, 2, ShotInterval: .14, ShotEnergy: 1.4, Damage: 10, ProjectileSpeed: 700),
         new ModuleDefinition(ModuleKind.Rocket, "Rocket", 2, 1, ShotInterval: .8, ShotEnergy: 7, Damage: 45, ProjectileSpeed: 340, BlastRadius: 85),
-        new ModuleDefinition(ModuleKind.Shield, "Shield emitter", 2, 2, Consumption: 16, ShieldCapacity: 70, ShieldRecharge: 20)
+        new ModuleDefinition(ModuleKind.Shield, "Shield emitter", 2, 2, Consumption: 16, ShieldCapacity: 70, ShieldRecharge: 20),
+        new ModuleDefinition(ModuleKind.GuidedRocket, "Guided rocket", 2, 2, ShotInterval: .65, ShotEnergy: 8, Damage: 52, ProjectileSpeed: 410, BlastRadius: 95),
+        new ModuleDefinition(ModuleKind.Laser, "Laser", 1, 3, ShotInterval: .05, ShotEnergy: 1.2, Damage: 4.5, ProjectileSpeed: 1600),
+        new ModuleDefinition(ModuleKind.FanBlaster, "Fan blaster", 2, 2, ShotInterval: .32, ShotEnergy: 4.5, Damage: 9, ProjectileSpeed: 620),
+        new ModuleDefinition(ModuleKind.Bomb, "Bomb", 2, 2, ShotInterval: 1.2, ShotEnergy: 10, Damage: 110, BlastRadius: 175, Duration: .85),
+        new ModuleDefinition(ModuleKind.Seeker, "Seeker", 1, 2, ShotInterval: .4, ShotEnergy: 3.5, Damage: 20, ProjectileSpeed: 440)
     });
     public static ModuleDefinition Get(ModuleKind kind) => All[(int)kind];
 }
@@ -116,7 +121,7 @@ public sealed class ShipModule
         ModuleKind.EngineControl or ModuleKind.PowerControl or ModuleKind.WeaponControl or ModuleKind.ShieldControl => WireKind.Control,
         ModuleKind.Engine or ModuleKind.Dash => WireKind.EngineData,
         ModuleKind.Battery or ModuleKind.Emergency or ModuleKind.Feedback => WireKind.PowerData,
-        ModuleKind.Blaster or ModuleKind.Rocket => WireKind.WeaponData,
+        ModuleKind.Blaster or ModuleKind.Rocket or ModuleKind.GuidedRocket or ModuleKind.Laser or ModuleKind.FanBlaster or ModuleKind.Bomb or ModuleKind.Seeker => WireKind.WeaponData,
         ModuleKind.Shield => WireKind.ShieldData,
         _ => null
     };
