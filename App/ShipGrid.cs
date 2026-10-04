@@ -11,6 +11,9 @@ public partial class ShipGrid : Control
     public float CellSize { get; set; }=48;
     public Func<ShipLayout> Layout { get; set; }=null!;
     public Func<int,ModuleStatus?> Status { get; set; }=null!;
+    public Func<bool> UseInventory { get; set; }=()=>false;
+    public Func<ModuleKind,Cell,int,EditResult>? PlaceRequested { get; set; }
+    public Func<int,bool>? RemoveRequested { get; set; }
     public event Action<string>? Edited;
     public event Action<int?>? SelectionChanged;
     public event Action<WireKind>? DataKindChanged;
@@ -68,7 +71,7 @@ public partial class ShipGrid : Control
     public void RemoveSelection()
     {
         if(HasPlacement) { Cancel();return; }
-        if(SelectedId is int id) { Layout().Remove(id); Select(null); Edited?.Invoke("Moduł usunięty. Kable pozostają na siatce."); }
+        if(SelectedId is int id) { RemoveModule(id); Select(null); Edited?.Invoke("Moduł usunięty. Kable pozostają na siatce."); }
     }
     private Cell CellAt(Vector2 p)=>new((int)Math.Floor(p.X/CellSize),(int)Math.Floor(p.Y/CellSize));
     private WireKind Kind=>Tool==EditorTool.Power?WireKind.Power:DataKind;
@@ -121,6 +124,12 @@ public partial class ShipGrid : Control
             if(Tool==EditorTool.Erase) { RemoveAt(_hover);return; }
             if(Pending is { } kind)
             {
+                if(UseInventory())
+                {
+                    var placed=PlaceRequested!(kind,_hover,PlacementRotation);
+                    if(placed.Success) { Pending=null;Select(Layout().ModuleAt(_hover)?.Id); }
+                    Report(placed,"Moduł zamontowany. Podłącz jego złącza.");return;
+                }
                 string addedMessage="Moduł dodany. Podłącz port energii i port sterowania.";
                 var result=Layout().TryAdd(kind,_hover,out var added,PlacementRotation);
                 if(result.Success)
@@ -173,11 +182,12 @@ public partial class ShipGrid : Control
         if(IsVisibleInTree() && ev is InputEventMouseButton { ButtonIndex:MouseButton.Left, Pressed:false } && !GetGlobalRect().HasPoint(GetGlobalMousePosition()))
         { _drawing=false;_dragId=null;_dragging=false;_path.Clear();QueueRedraw(); }
     }
+    private bool RemoveModule(int id)=>UseInventory()?RemoveRequested!(id):Layout().Remove(id);
     private void RemoveAt(Cell cell)
     {
         if(!Layout().Contains(cell))return;
         if(Layout().ModuleAt(cell) is { } module)
-        { Layout().Remove(module.Id);if(SelectedId==module.Id)Select(null); }
+        { RemoveModule(module.Id);if(SelectedId==module.Id)Select(null); }
         else
         {
             foreach(var kind in Enum.GetValues<WireKind>())Layout().RemoveWire(cell,kind);

@@ -46,9 +46,10 @@ public partial class Main
         track.AddItem("Orbital Assault  /  138 BPM");track.AddItem("Orbital Overdrive  /  150 BPM");track.Select(Controls.MusicTrack);
         _settingsView.AddChild(track);track.ItemSelected+=index=>{ Controls.MusicTrack=(int)index;Controls.Save();_audio.PlayMusic(); };
         Style.PanelAt(_settingsView,890,529,526,325);
-        Style.Label(_settingsView,"SEMI_GOAL  /  WERSJA TESTOWA",914,550,480,25,13,Style.Amber,true);
-        Style.Label(_settingsView,"Swobodnie sprawdzaj konfiguracje.\nModuły i ulepszenia nic nie kosztują.\nPrzeciwnicy pojawią się w kolejnym etapie.",914,595,476,86,17,Style.Muted);
+        Style.Label(_settingsView,"ORBITAL  /  TRYBY GRY",914,550,480,25,13,Style.Amber,true);
+        Style.Label(_settingsView,"Przetrwanie: walka, sklep i rozwój.\nLaboratorium: swobodne testy modułów.\nNowa rozgrywka zawsze zaczyna od zera.",914,595,476,86,17,Style.Muted);
         Style.Label(_settingsView,"F11  pełny ekran\nEsc  anuluje oczekiwanie na przypisanie",914,704,478,47,13,Style.Muted,true);
+        Style.Button(_settingsView,"Menu główne",914,754,477,30,()=>ReturnToMenu());
         Style.Button(_settingsView,"Zakończ grę",914,789,477,43,()=>QuitCleanly());
         foreach(var child in _settingsView.GetChildren().OfType<Control>().Where(c=>c.Position.Y>=136))
         {

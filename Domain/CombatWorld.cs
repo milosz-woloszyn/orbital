@@ -47,6 +47,7 @@ public sealed class CombatWorld
     private readonly List<CombatEffect> effects=new();
     private int nextEnemy=1;
     private float spawnTimer=1.4f,hitGrace;
+    private Vector2? previousPlayer;
     public CombatWorld(int seed=1,bool autoSpawn=true) { random=new Random(seed);AutoSpawn=autoSpawn; }
     public bool AutoSpawn { get; set; }
     public float Time { get; private set; }
@@ -81,6 +82,7 @@ public sealed class CombatWorld
     public void Step(float dt,Vector2 player,Vector2 velocity,Vector2 cursor,IReadOnlyList<WeaponShot> shots,ArenaBounds bounds)
     {
         if(!float.IsFinite(dt) || dt<0 || dt>.25f)throw new ArgumentOutOfRangeException(nameof(dt));
+        var playerStart=previousPlayer??player-velocity*dt;previousPlayer=player;
         effects.Clear();Time+=dt;hitGrace=Math.Max(0,hitGrace-dt);
         foreach(var beam in beams) { beam.Life-=dt;beam.Start=player;beam.End=player+SafeDirection(cursor-player)*MathF.Sqrt(bounds.Width*bounds.Width+bounds.Height*bounds.Height); }
         beams.RemoveAll(b=>b.Life<=0);
@@ -97,6 +99,7 @@ public sealed class CombatWorld
         {
             if(!enemy.Alive)continue;
             enemy.Age+=dt;enemy.Flash=Math.Max(0,enemy.Flash-dt);enemy.ContactTimer-=dt;
+            var enemyStart=enemy.Position;
             var aim=SafeDirection(player-enemy.Position);
             if(enemy.Kind==EnemyKind.Minion)
             {
@@ -119,7 +122,7 @@ public sealed class CombatWorld
                 var destination=new Vector2(bounds.Left+bounds.Width*(.5f+.34f*MathF.Sin(enemy.Age*.26f+enemy.Id)),bounds.Top+110+(enemy.Id%3)*55);
                 enemy.Position+=SafeDirection(destination-enemy.Position)*Math.Min(55,Vector2.Distance(destination,enemy.Position))*dt;
             }
-            if(enemy.ContactTimer<=0 && Vector2.DistanceSquared(player,enemy.Position)<MathF.Pow(enemy.Radius+7,2))
+            if(enemy.ContactTimer<=0 && SegmentHit(playerStart-enemyStart,player-enemy.Position,Vector2.Zero,enemy.Radius+7))
             { HitPlayer(14);enemy.ContactTimer=.65f; }
             enemy.FireTimer-=dt;
             if(enemy.FireTimer<=0 && bounds.Contains(enemy.Position))
@@ -174,7 +177,7 @@ public sealed class CombatWorld
             if(b.Motion is BulletMotion.Rocket or BulletMotion.Guided &&
                 SegmentHit(old,b.Position,b.Target,Math.Max(2,b.Speed*dt*.1f)))
             { Explode(b,b.Target,player);remove=true; }
-            if(!remove && b.Hostile && SegmentHit(old,b.Position,player,b.Radius+6))
+            if(!remove && b.Hostile && SegmentHit(old-playerStart,b.Position-player,Vector2.Zero,b.Radius+6))
             {
                 if(b.Motion==BulletMotion.Rocket)Explode(b,b.Position,player);else HitPlayer(b.Damage);
                 remove=true;
@@ -214,7 +217,7 @@ public sealed class CombatWorld
             var direction=Rotate(aim,(i-(count-1)*.5f)*.14f);
             var motion=shot.Kind switch { ModuleKind.Rocket=>BulletMotion.Rocket,ModuleKind.GuidedRocket=>BulletMotion.Guided,
                 ModuleKind.Seeker=>BulletMotion.Seeker,ModuleKind.Bomb=>BulletMotion.Bomb,_=>BulletMotion.Straight };
-            bullets.Add(new CombatBullet { Position=player+(motion==BulletMotion.Bomb?Vector2.Zero:direction*12),
+            bullets.Add(new CombatBullet { Position=player+(motion is BulletMotion.Bomb or BulletMotion.Rocket or BulletMotion.Guided?Vector2.Zero:direction*12),
                 Direction=direction,Target=bounds.Clamp(cursor),Speed=(float)shot.Speed,Damage=(float)shot.Damage,
                 BlastRadius=(float)shot.BlastRadius,Radius=motion==BulletMotion.Straight?3:5,Motion=motion });
         }

@@ -13,30 +13,35 @@ public partial class Arena : Control
     public Sound Audio { get; set; }=null!;
     public Vector2 ShipPosition { get; private set; }=new(558,530);
     public Vector2 Velocity { get; private set; }
-    public int ProjectileCount=>_projectiles.Count;
-    public int ShotsFired { get; private set; }
-    public int ExplosionsCreated { get; private set; }
+    public CombatWorld World { get; private set; }=new(autoSpawn:false);
+    public bool CombatEnabled { get; private set; }
+    public event Action? FrameFinished;
+    public int ProjectileCount=>World.Bullets.Count;
+    public int ShotsFired=>World.ShotsFired;
+    public int ExplosionsCreated=>World.Explosions;
     public Vector2 AimOverride { get; set; }=Vector2.Zero;
     private Vector2 _dashDirection;
     private float _angle,_clock,_flash,_shake;
     private bool _dashVisual;
-    private readonly List<Projectile> _projectiles=new();
     private readonly List<Spark> _sparks=new();
     private readonly List<Blast> _blasts=new();
+    private readonly List<RewardText> _rewards=new();
+    private sealed class RewardText { public Vector2 Position;public string Text="";public float Life=.9f; }
+    public void RewardFeedback(EnemyReward reward)=>_rewards.Add(new RewardText { Position=Visual(reward.Position),Text=$"+{reward.Experience} EXP  +{reward.Materials} M" });
     private readonly Random _rng=new(328);
     private readonly List<(Vector2 Pos,float Size,float Phase)> _stars=new();
-    private sealed class Projectile
-    { public Vector2 Position,Direction,Target; public float Speed,Radius,Age; public bool Rocket; }
     private sealed class Spark
     { public Vector2 Position,Velocity; public float Life,MaxLife; public Color Color; }
-    private sealed class Blast { public Vector2 Position; public float Life,Radius; }
+    private sealed class Blast { public Vector2 Position; public float Life,Radius; public bool Hostile,Kill; }
     public override void _Ready()
     {
         MouseFilter=MouseFilterEnum.Ignore; TextureFilter=TextureFilterEnum.Nearest;
         for(int i=0;i<260;i++) _stars.Add((new Vector2((float)_rng.NextDouble(),(float)_rng.NextDouble()),(float)_rng.NextDouble()*1.3f+.4f,(float)_rng.NextDouble()*6));
     }
     public void Reset()
-    { ShipPosition=new(Bounds.GetCenter().X,Bounds.End.Y-156);Velocity=Vector2.Zero;_projectiles.Clear();_sparks.Clear();_blasts.Clear();_dashVisual=false; }
+    { ShipPosition=new(Bounds.GetCenter().X,Bounds.End.Y-156);Velocity=Vector2.Zero;World=new CombatWorld(System.Environment.TickCount,CombatEnabled);_flash=0;_shake=0;_sparks.Clear();_blasts.Clear();_rewards.Clear();_dashVisual=false; }
+    public void SetCombat(bool enabled,int seed)
+    { CombatEnabled=enabled;Reset();World=new CombatWorld(seed,enabled); }
     public void Hit()
     { _flash=.3f;_shake=5; Emit(ShipPosition,Style.Red,24,160);Audio.Play("hit"); }
     public override void _PhysicsProcess(double delta)
@@ -77,22 +82,20 @@ public partial class Arena : Control
             var tail=Vector2.FromAngle(_angle+Mathf.Pi/2);
             _sparks.Add(new Spark { Position=ShipPosition+tail*19,Velocity=tail*80-Velocity*.12f+new Vector2(_rng.Next(-12,12),_rng.Next(-12,12)),Life=.2f,MaxLife=.2f,Color=frame.DashActive?Style.Cyan:Style.Amber });
         }
-        foreach(var shot in frame.Shots)
+        if(!Dead())
         {
-            var target=cursor.Clamp(Bounds.Position,Bounds.End);
-            var aim=(target-ShipPosition).Normalized();if(aim.IsZeroApprox()) aim=Vector2.Up;
-            bool rocket=shot.Kind==ModuleKind.Rocket;
-            _projectiles.Add(new Projectile { Position=ShipPosition+aim*22,Direction=aim,Target=target,Speed=(float)shot.Speed,Radius=(float)shot.BlastRadius,Rocket=rocket });
-            ShotsFired++;Audio.Play(rocket?"rocket":"shot",rocket?.7f:.5f);
-        }
-        for(int i=_projectiles.Count-1;i>=0;i--)
-        {
-            var p=_projectiles[i];p.Age+=dt;
-            if(p.Rocket && (p.Position.DistanceTo(p.Target)<=p.Speed*dt+1 || p.Age>5))
-            { Explode(p.Target,p.Radius);_projectiles.RemoveAt(i);continue; }
-            p.Position+=p.Direction*p.Speed*dt;
-            if(!Bounds.Grow(30).HasPoint(p.Position) || p.Age>6) { _projectiles.RemoveAt(i);continue; }
-            if(p.Rocket) _sparks.Add(new Spark { Position=p.Position,Velocity=-p.Direction*30,Life=.23f,MaxLife=.23f,Color=Style.Amber });
+            World.Step(dt,Numeric(ShipPosition),Numeric(Velocity),Numeric(cursor),frame.Shots,
+                new ArenaBounds(Bounds.Position.X,Bounds.Position.Y,Bounds.Size.X,Bounds.Size.Y));
+            foreach(var shot in frame.Shots)
+                Audio.Play(shot.Kind is ModuleKind.Rocket or ModuleKind.GuidedRocket?"rocket":"shot",shot.Kind==ModuleKind.Laser?.12f:.45f);
+            foreach(var effect in World.Effects)
+            {
+                var point=Visual(effect.Position);
+                _blasts.Add(new Blast { Position=point,Life=.45f,Radius=effect.Radius,Hostile=effect.Hostile,Kill=effect.Kill });
+                Emit(point,effect.Hostile?Style.Red:Style.Amber,effect.Kill?22:32,effect.Kill?140:220);
+                Audio.Play("burst",effect.Kill?.22f:.5f);
+                if(effect.Kill)_shake=Math.Max(_shake,1.8f);
+            }
         }
         for(int i=_sparks.Count-1;i>=0;i--)
         { var p=_sparks[i];p.Life-=dt;p.Position+=p.Velocity*dt;if(p.Life<=0)_sparks.RemoveAt(i); }
@@ -100,10 +103,12 @@ public partial class Arena : Control
         { _blasts[i].Life-=dt;if(_blasts[i].Life<=0)_blasts.RemoveAt(i); }
         // Bounded transient visuals; weapons themselves are not limited by this cosmetic budget.
         if(_sparks.Count>2500)_sparks.RemoveRange(0,_sparks.Count-2500);
-        QueueRedraw();
+        foreach(var reward in _rewards) { reward.Life-=dt;reward.Position+=new Vector2(0,-22*dt); }
+        _rewards.RemoveAll(r=>r.Life<=0);
+        FrameFinished?.Invoke();QueueRedraw();
     }
-    private void Explode(Vector2 point,float radius)
-    { _blasts.Add(new Blast { Position=point,Life=.5f,Radius=radius });Emit(point,Style.Amber,35,220);Audio.Play("burst",.55f);ExplosionsCreated++; }
+    private static System.Numerics.Vector2 Numeric(Vector2 v)=>new(v.X,v.Y);
+    private static Vector2 Visual(System.Numerics.Vector2 v)=>new(v.X,v.Y);
     private void Emit(Vector2 point,Color color,int count,float speed)
     {
         for(int i=0;i<count;i++)
@@ -121,23 +126,19 @@ public partial class Arena : Control
         DrawLine(center-new Vector2(0,18),center+new Vector2(0,18),new Color("324654"));
         foreach(var star in _stars)
             DrawCircle(Bounds.Position+star.Pos*Bounds.Size,star.Size,new Color(.65f,.8f,.88f,.18f+.12f*Mathf.Sin(_clock*.45f+star.Phase)));
-        DrawString(Style.Mono,Bounds.Position+new Vector2(24,35),"SEKTOR 00   /   SWOBODNY LOT",HorizontalAlignment.Left,-1,12,Style.Muted);
-        DrawString(Style.Mono,new Vector2(24,Bounds.End.Y-21),$"POCISKI {ProjectileCount:000}   •   BRAK PRZECIWNIKÓW",HorizontalAlignment.Left,-1,11,Style.Muted);
+        DrawString(Style.Mono,Bounds.Position+new Vector2(24,35),CombatEnabled?$"ORBITA {(int)(World.Time/60)+1:00}   /   PRZETRWAJ":"SEKTOR 00   /   SWOBODNY LOT",HorizontalAlignment.Left,-1,12,Style.Muted);
+        DrawString(Style.Mono,new Vector2(24,Bounds.End.Y-21),CombatEnabled?$"WROGOWIE {World.Enemies.Count:00}   •   OSTRZAŁ {ProjectileCount:000}":$"POCISKI {ProjectileCount:000}   •   LABORATORIUM",HorizontalAlignment.Left,-1,11,Style.Muted);
         foreach(var blast in _blasts)
         {
             float progress=1-blast.Life/.5f,radius=blast.Radius*(.25f+.75f*progress);
-            DrawCircle(blast.Position,radius,new Color(Style.Amber,blast.Life*.13f));
-            DrawArc(blast.Position,radius,0,Mathf.Tau,60,new Color(Style.Amber,blast.Life*1.5f),2);
+            var blastColor=blast.Hostile?Style.Red:Style.Amber;
+            DrawCircle(blast.Position,radius,new Color(blastColor,blast.Life*.13f));
+            DrawArc(blast.Position,radius,0,Mathf.Tau,60,new Color(blastColor,blast.Life*1.5f),2);
         }
         foreach(var p in _sparks)
             DrawRect(new Rect2(p.Position-new Vector2(1,1),new Vector2(2,2)),new Color(p.Color,p.Life/p.MaxLife));
-        foreach(var p in _projectiles)
-        {
-            DrawLine(p.Position-p.Direction*(p.Rocket?15:19),p.Position,p.Rocket?Style.Amber:Style.Cyan,p.Rocket?5:3);
-            DrawCircle(p.Position,p.Rocket?2.5f:1.5f,Colors.White);
-            if(p.Rocket)
-                DrawArc(p.Target,10,0,Mathf.Tau,16,new Color(Style.Amber,.25f),1);
-        }
+        DrawCombat();
+        foreach(var reward in _rewards)DrawString(Style.Mono,reward.Position-new Vector2(55,0),reward.Text,HorizontalAlignment.Left,-1,12,new Color(Style.Amber,Math.Min(1,reward.Life*2)));
         if(!Dead())
         {
             if(Shield()>0)

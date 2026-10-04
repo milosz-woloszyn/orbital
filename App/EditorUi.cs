@@ -16,10 +16,10 @@ public partial class Main
         _editorView=Screen();
         Header(_editorView,"ORBITAL  /  STOCZNIA","Zbuduj swój układ","Symulacja zatrzymana. Łącz systemy i sprawdzaj, jak zmienia się statek.");
         Style.Right(Style.Button(_editorView,"Ustawienia",1136,35,140,46,ShowSettings));
-        Style.Right(Style.Button(_editorView,"Wróć do lotu  ↗",1288,35,152,46,()=>ShowView("arena"),true));
+        Style.Right(Style.Button(_editorView,"Wróć do lotu  ↗",1288,35,152,46,RequestReturnToFlight,true));
         var catalog=Style.StretchBottom(Style.Group(_editorView,0,116,250,762));
         Style.StretchBottom(Style.PanelAt(catalog,0,0,250,762));
-        Style.Label(catalog,"KATALOG MODUŁÓW",18,13,218,24,13,Style.Cyan,true);
+        _catalogTitle=Style.Label(catalog,"KATALOG MODUŁÓW",18,13,218,24,13,Style.Cyan,true);
         var search=Style.Rect(new LineEdit { PlaceholderText="Szukaj modułu…",ClearButtonEnabled=true },16,52,218,38);
         catalog.AddChild(search);
         var scroll=Style.Rect(new ScrollContainer { HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled },12,105,230,609);
@@ -27,7 +27,7 @@ public partial class Main
         _catalog=new VBoxContainer { SizeFlagsHorizontal=SizeFlags.ExpandFill };
         _catalog.AddThemeConstantOverride("separation",6);scroll.AddChild(_catalog);
         search.TextChanged+=text=>PopulateCatalog(text);PopulateCatalog("");
-        Style.Bottom(Style.Label(catalog,"∞  BEZ KOSZTÓW / BEZ LIMITU",18,729,218,20,10,Style.Muted,true));
+        _catalogFooter=Style.Bottom(Style.Label(catalog,"∞  BEZ KOSZTÓW / BEZ LIMITU",18,729,218,20,10,Style.Muted,true));
 
         var center=Style.StretchBottom(Style.StretchRight(Style.Group(_editorView,268,116,860,762)));
         var toolNames=new[] { "1  Wybór", "2  Energia", "3  Dane", "4  Mostek", "5  Usuń" };
@@ -36,7 +36,7 @@ public partial class Main
             var tool=(EditorTool)i;
             _toolButtons[tool]=Style.Button(center,toolNames[i],i*113,0,105,43,()=>SetTool(tool));
         }
-        Style.Right(Style.Button(center,"Połącz automatycznie",621,0,239,43,()=>
+        _autoConnectButton=Style.Right(Style.Button(center,"Połącz automatycznie",621,0,239,43,()=>
         {
             Grid.Cancel();
             var errors=Layout.AutoConnectAll();AfterEdit();
@@ -49,18 +49,23 @@ public partial class Main
         _dataKindSelect.TooltipText="Typ sieci podczas rysowania po pustych polach. Start na module wybiera najbliższe złącze danych.";
         var frame=Style.StretchBottom(Style.StretchRight(Style.PanelAt(center,0,110,860,552)));
         Grid=Style.Rect(new ShipGrid { Layout=()=>Layout, Status=id=>Simulation.Status.GetValueOrDefault(id) },0,0,768,480);
-        frame.AddChild(Grid);
-        var numbers=Enumerable.Range(1,Layout.Width).Select(x=>Style.Label(frame,x.ToString("00"),0,0,46,16,9,Style.Muted,true)).ToArray();
-        foreach(var label in numbers)label.HorizontalAlignment=HorizontalAlignment.Center;
-        void ResizeGrid()
+        _gridScroll=Style.Rect(new ScrollContainer { HorizontalScrollMode=ScrollContainer.ScrollMode.Auto,VerticalScrollMode=ScrollContainer.ScrollMode.Auto },8,8,844,536);
+        frame.AddChild(_gridScroll);Style.StretchRight(Style.StretchBottom(_gridScroll));
+        _gridScroll.AddChild(Grid);
+        ResizeShipGrid=()=>
         {
-            Grid.CellSize=MathF.Floor(Math.Min((frame.Size.X-16)/Layout.Width,(frame.Size.Y-26)/Layout.Height));
-            Grid.Size=new(Grid.CellSize*Layout.Width,Grid.CellSize*Layout.Height);
-            Grid.Position=new((frame.Size.X-Grid.Size.X)/2,18+(frame.Size.Y-18-Grid.Size.Y)/2);
-            for(int x=0;x<Layout.Width;x++) { numbers[x].Position=new(Grid.Position.X+x*Grid.CellSize,Grid.Position.Y-18);numbers[x].Size=new(Grid.CellSize,16); }
-            Grid.QueueRedraw();
-        }
-        frame.Resized+=ResizeGrid;ResizeGrid();
+            Grid.CellSize=Math.Max(42,MathF.Floor(Math.Min((_gridScroll.Size.X-16)/18,(_gridScroll.Size.Y-16)/12)));
+            Grid.CustomMinimumSize=new(Grid.CellSize*Layout.Width,Grid.CellSize*Layout.Height);
+            Grid.Size=Grid.CustomMinimumSize;Grid.QueueRedraw();
+        };
+        _gridScroll.Resized+=()=>ResizeShipGrid();ResizeShipGrid();
+        Grid.PlaceRequested=(kind,cell,rotation)=>
+        {
+            if(IsLaboratory)return EditResult.Fail("Tryb laboratoryjny używa własnego katalogu.");
+            return Run!.Place(_placingStock,Layout,cell,rotation,out _,Simulation);
+        };
+        Grid.UseInventory=()=>!IsLaboratory;
+        Grid.RemoveRequested=id=>Run!.Store(Layout,id,Simulation);
         Grid.SelectionChanged+=_=>UpdateInspector();
         Grid.DataKindChanged+=kind=>
         {
@@ -82,12 +87,14 @@ public partial class Main
     }
     private void PopulateCatalog(string filter)
     {
+        _catalogFilter=filter;
+        if(!IsLaboratory) { PopulateRunCatalog(filter);return; }
         foreach(var child in _catalog.GetChildren()) { _catalog.RemoveChild(child);child.QueueFree(); }
         var groups=new[]
         {
             ("01  ZASILANIE",new[] { ModuleKind.Generator,ModuleKind.Battery,ModuleKind.Emergency,ModuleKind.Feedback }),
             ("02  DOWODZENIE",new[] { ModuleKind.Command,ModuleKind.PowerControl,ModuleKind.EngineControl,ModuleKind.WeaponControl,ModuleKind.ShieldControl }),
-            ("03  NAPĘD I UZBROJENIE",new[] { ModuleKind.Engine,ModuleKind.Dash,ModuleKind.Blaster,ModuleKind.Rocket,ModuleKind.Shield })
+            ("03  NAPĘD I UZBROJENIE",new[] { ModuleKind.Engine,ModuleKind.Dash,ModuleKind.Blaster,ModuleKind.Rocket,ModuleKind.Shield,ModuleKind.GuidedRocket,ModuleKind.Laser,ModuleKind.FanBlaster,ModuleKind.Bomb,ModuleKind.Seeker })
         };
         foreach(var (title,kinds) in groups)
         {
@@ -152,7 +159,7 @@ public partial class Main
             Style.Label(_inspector,"Wybierz podzespół na siatce,\naby zobaczyć jego połączenia,\npriorytet i parametry.",20,202,254,86,15,Style.Muted);
             Style.Label(_inspector,"01  DODAJ MODUŁ\n02  PODŁĄCZ ENERGIĘ\n03  PODŁĄCZ STEROWANIE\n04  WRÓĆ DO LOTU",20,356,254,136,13,Style.Muted,true);
             Style.Button(_inspector,"Usuń wszystkie kable",20,578,254,42,()=>ConfirmClearWires());
-            Style.Label(_inspector,"Gotowy układ możesz przywrócić\nw konsoli testowej na arenie.",20,645,254,48,13,Style.Muted);
+            Style.Label(_inspector,IsLaboratory?"Gotowy układ możesz przywrócić\nw konsoli testowej na arenie.":"Usunięte moduły wracają do magazynu.\nZakupy wymagają podłączenia portów.",20,645,254,48,13,Style.Muted);
             return;
         }
         var image=Style.Rect(new TextureRect { Texture=Art.Icon(module.Kind),ExpandMode=TextureRect.ExpandModeEnum.IgnoreSize,StretchMode=TextureRect.StretchModeEnum.KeepAspectCentered,MouseFilter=MouseFilterEnum.Ignore },18,19,68,66);
@@ -167,7 +174,12 @@ public partial class Main
         var priority=Spin(_inspector,190,277,84,40,1,10,1,module.Priority);
         priority.ValueChanged+=value=>{ module.Priority=(int)value;Simulation.Refresh();UpdateEditorStats();Grid.QueueRedraw(); };
         Style.Label(_inspector,$"Poziom {module.Level}",20,332,130,29,16);
-        Style.Button(_inspector,"Ulepsz  +1",152,326,122,39,()=>{ Layout.Upgrade(id);AfterEdit();Toast("Moduł ulepszony bez kosztów."); });
+        var upgrade=Style.Button(_inspector,"Ulepsz  +1",152,326,122,39,()=>
+        {
+            if(IsLaboratory?Layout.Upgrade(id):Run!.Upgrade(Layout,id))
+            { AfterEdit();PopulateCatalog(_catalogFilter);Toast("Moduł ulepszony bez kosztów.");_audio.Play("upgrade"); }
+        });
+        upgrade.Disabled=!IsLaboratory && !Run!.UpgradeAvailable;
         Style.Button(_inspector,"Obróć  R",20,384,122,40,()=>{ Grid.RotateSelection();AfterEdit(); });
         Style.Button(_inspector,"Usuń",152,384,122,40,()=>{ Grid.RemoveSelection();AfterEdit(); });
         string distance=status is { SourceDistance:<int.MaxValue }?$"{status.SourceDistance} pól kabla":"brak trasy";
@@ -196,7 +208,7 @@ public partial class Main
         {
             var d=module.Definition;double scale=module.UpgradeFactor;
             string stats=d.IsEnergy?(module.Kind==ModuleKind.Battery?$"POJEMNOŚĆ  {d.Capacity*scale:0} E":module.Kind==ModuleKind.Feedback?$"ODZYSK  {d.FeedbackEnergy*scale:0} E / trafienie":$"PRODUKCJA  {d.Generation*scale:0} E/s")
-                :module.Kind==ModuleKind.Shield?$"OSŁONA  {d.ShieldCapacity*scale:0}\nŁADOWANIE  {d.ShieldRecharge*scale:0}/s":$"POBÓR  {d.Consumption:0.#} E/s";
+                :module.Kind==ModuleKind.Shield?$"OSŁONA  {d.ShieldCapacity*scale:0}\nŁADOWANIE  {d.ShieldRecharge*scale:0}/s":$"POBÓR  {d.Consumption/(d.IsController || module.Kind==ModuleKind.Command?scale:1):0.#} E/s";
             Style.Label(_inspector,stats,20,530,254,70,13,Style.Cyan,true);
             if(module.Kind==ModuleKind.Emergency)Style.Label(_inspector,$"Impuls {d.Duration:0}s / odnowienie {d.Cooldown:0}s",20,608,254,30,13,Style.Muted);
         }

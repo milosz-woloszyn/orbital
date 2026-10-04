@@ -441,5 +441,13 @@ public sealed class ShipSimulation
         if (Layout.Find(moduleId) is not { Kind: ModuleKind.Battery } module) throw new ArgumentException("To nie jest bateria.", nameof(moduleId));
         runtime[moduleId].Energy = Math.Min(amount, module.Definition.Capacity * module.UpgradeFactor); Refresh();
     }
+    public void RestoreReserves(int moduleId,double? energy,double? shield)
+    {
+        Synchronize();
+        var module=Layout.Find(moduleId)??throw new ArgumentException("Moduł nie istnieje.",nameof(moduleId));
+        if(energy is { } e)runtime[moduleId].Energy=Math.Clamp(e,0,module.Definition.Capacity*module.UpgradeFactor);
+        if(shield is { } s)runtime[moduleId].Shield=Math.Clamp(s,0,module.Definition.ShieldCapacity*module.UpgradeFactor);
+        Refresh();
+    }
     public void Repair() { Hull = HullCapacity; Refresh(); }
 }

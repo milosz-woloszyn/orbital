@@ -8,6 +8,8 @@ public static class Art
     private static Texture2D _base=null!, _energy=null!, _control=null!;
     public static Texture2D Player { get; private set; }=null!;
     private static readonly Dictionary<ModuleKind, Texture2D> Icons=new();
+    private static Texture2D[] _enemies=null!;
+    public static Texture2D EnemyTexture(EnemyKind kind)=>_enemies[kind switch { EnemyKind.Fan or EnemyKind.Looper=>1,EnemyKind.Rocket or EnemyKind.Carrier=>2,_=>0 }];
     public static void Load()
     {
         _base=GD.Load<Texture2D>("res://graphics/sprites-base-v01.png");
@@ -22,7 +24,14 @@ public static class Art
         Rect2[] controlRegions=[new(48,40,365,301),new(456,75,398,256),new(933,30,320,300),new(1355,61,350,273),new(63,470,336,273),new(452,500,405,254),new(925,454,344,288)];
         for(int i=0;i<controlKinds.Length;i++)
             Icons[controlKinds[i]]=new AtlasTexture { Atlas=_control, Region=controlRegions[i], FilterClip=true };
-        Icons[ModuleKind.ShieldControl]=Icons[ModuleKind.Shield];
+        foreach(var kind in new[] { ModuleKind.GuidedRocket,ModuleKind.Laser,ModuleKind.FanBlaster,ModuleKind.Bomb,ModuleKind.Seeker,ModuleKind.ShieldControl })
+            Icons[kind]=GD.Load<Texture2D>($"res://Assets/Modules/{kind}.svg");
+        _enemies=new Texture2D[]
+        {
+            new AtlasTexture { Atlas=_base,Region=new Rect2(385,80,180,245),FilterClip=true },
+            new AtlasTexture { Atlas=_base,Region=new Rect2(625,95,320,240),FilterClip=true },
+            new AtlasTexture { Atlas=_base,Region=new Rect2(950,35,290,300),FilterClip=true }
+        };
     }
     public static Texture2D Icon(ModuleKind kind)=>Icons[kind];
     public static string Name(ModuleKind kind)=>kind switch
@@ -32,7 +41,8 @@ public static class Art
         ModuleKind.Engine=>"Silniki",ModuleKind.Dash=>"Silniki zrywu",ModuleKind.Command=>"Dowodzenie",
         ModuleKind.EngineControl=>"Sterownik silników",ModuleKind.PowerControl=>"Sterownik zasilania",
         ModuleKind.WeaponControl=>"Sterownik uzbrojenia",ModuleKind.ShieldControl=>"Sterownik osłon",
-        ModuleKind.Blaster=>"Blaster",ModuleKind.Rocket=>"Rakieta",ModuleKind.Shield=>"Osłony",_=>kind.ToString()
+        ModuleKind.Blaster=>"Blaster",ModuleKind.Rocket=>"Rakieta",ModuleKind.Shield=>"Osłony",ModuleKind.GuidedRocket=>"Rakieta sterowana",ModuleKind.Laser=>"Laser",
+        ModuleKind.FanBlaster=>"Blaster wachlarzowy",ModuleKind.Bomb=>"Bomba",ModuleKind.Seeker=>"Łowca",_=>kind.ToString()
     };
     public static string Description(ModuleKind kind)=>kind switch
     {
@@ -49,6 +59,11 @@ public static class Art
         ModuleKind.ShieldControl=>"Steruje ładowaniem osłon.\nDodawany razem z osłoną.",
         ModuleKind.Blaster=>"Szybki strumień pocisków.\nNiski koszt pojedynczego strzału.",
         ModuleKind.Rocket=>"Zapamiętuje pozycję kursora.\nWybucha po dotarciu do celu.",
+        ModuleKind.GuidedRocket=>"Podąża za kursorem. Wybucha\nna celu lub po trafieniu wroga.",
+        ModuleKind.Laser=>"Ciągła wiązka. Przebija wszystkich\nprzeciwników na linii strzału.",
+        ModuleKind.FanBlaster=>"Pięć pocisków w wachlarzu.\nŚrodek wyznacza kursor.",
+        ModuleKind.Bomb=>"Zostawia bombę pod statkiem.\nWybuch po 0,85 s. Nie rani gracza.",
+        ModuleKind.Seeker=>"Śledzi najbliższego przeciwnika.\nPo jego śmierci wybiera nowego.",
         ModuleKind.Shield=>"Ładuje osłonę za energię.\nObrażenia nadmiarowe trafiają w kadłub.",_=>""
     };
     public static string WireName(WireKind kind)=>kind switch

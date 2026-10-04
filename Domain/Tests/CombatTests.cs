@@ -13,7 +13,11 @@ internal static class CombatTests
         ("Fan, guided rockets, bombs and seeker retargeting",NewWeapons),
         ("All enemy archetypes attack and predicted rocket locks target",Enemies),
         ("Endurance combat remains finite with expired bullets",Endurance),
-        ("All weapons expose the weapon data port",Ports)
+        ("All weapons expose the weapon data port",Ports),
+        ("Inventory cannot refill batteries for free",Reserves),
+        ("Close rocket targets detonate and dash has no collision immunity",CloseTargets),
+        ("Every new weapon obeys ship energy and control",WeaponSystems),
+        ("Dense mixed combat stays bounded",DenseCombat)
     };
     private static readonly ArenaBounds Bounds=new(0,0,1200,800);
     private static readonly Vector2 Player=new(600,650);
@@ -135,5 +139,55 @@ internal static class CombatTests
             Check(module!.DataInputKind==WireKind.WeaponData && d.RequiredController==ModuleKind.WeaponControl);
             Check(d.ShotInterval>0 && d.ShotEnergy>0 && d.Damage>0);
         }
+    }
+    private static void Reserves()
+    {
+        var layout=ShipLayout.CreateStarter();var simulation=new ShipSimulation(layout);simulation.SetEnergy(17);
+        var run=new RunProgress(2);run.Reward(45,0);run.TryBeginLevel(layout);
+        var battery=layout.Modules.First(m=>m.Kind==ModuleKind.Battery);var cell=battery.Position;
+        Check(run.Store(layout,battery.Id,simulation));var stock=run.Inventory.Single();
+        Check(run.Place(stock.StockId,layout,cell,0,out var restored,simulation).Success);
+        Check(Math.Abs(simulation.Status[restored!.Id].StoredEnergy-17)<.001);
+    }
+    private static void CloseTargets()
+    {
+        var world=new CombatWorld(2,false);
+        world.Step(.016f,Player,Vector2.Zero,Player,new[] { Shot(ModuleKind.Rocket) },Bounds);
+        Check(world.Explosions==1 && world.Bullets.Count==0,"rocket at the cursor detonates immediately");
+        world=new CombatWorld(2,false);float damage=0;world.PlayerDamaged+=d=>damage+=d;
+        var enemy=world.Spawn(EnemyKind.Basic,new(600,300));enemy.FireTimer=0;
+        world.Step(.01f,new(600,450),Vector2.Zero,Vector2.Zero,Array.Empty<WeaponShot>(),Bounds);
+        world.Step(.2f,new(600,250),new(0,-1000),Vector2.Zero,Array.Empty<WeaponShot>(),Bounds);
+        Check(damage>0,"moving across a projectile must collide, including a dash");
+    }
+    private static void WeaponSystems()
+    {
+        foreach(var kind in new[] { ModuleKind.GuidedRocket,ModuleKind.Laser,ModuleKind.FanBlaster,ModuleKind.Bomb,ModuleKind.Seeker })
+        {
+            var layout=new ShipLayout(32,18);
+            var kinds=new[] { ModuleKind.Generator,ModuleKind.Command,ModuleKind.WeaponControl,ModuleKind.PowerControl,ModuleKind.Battery,kind };
+            for(int i=0;i<kinds.Length;i++)Check(layout.TryAdd(kinds[i],new(2+i*4,2),out _).Success);
+            Check(layout.AutoConnectAll().Count==0);
+            var weapon=layout.Modules.Last();layout.ConfigureWeapon(weapon.Id,WeaponMode.Passive);
+            var sim=new ShipSimulation(layout);var frame=sim.Step(.5,new());
+            Check(frame.Shots.Any(s=>s.Kind==kind),kind+" did not fire");
+            Check(sim.Energy<sim.Capacity || sim.Demand>0,"weapons must pay energy");
+            layout.Remove(layout.Modules.First(m=>m.Kind==ModuleKind.Command).Id);
+            Check(sim.Step(.5,new()).Shots.Count==0,"loss of command stops passive weapons");
+        }
+    }
+    private static void DenseCombat()
+    {
+        var world=new CombatWorld(71,false);
+        for(int i=0;i<50;i++)world.Spawn((EnemyKind)(i%5),new(60+(i%10)*115,90+(i/10)*55));
+        int peak=0;var timer=System.Diagnostics.Stopwatch.StartNew();
+        for(int i=0;i<1800;i++)
+        {
+            var player=new Vector2(600+420*MathF.Sin(i*.01f),650);
+            world.Step(1f/60,player,Vector2.Zero,new(600,100),Array.Empty<WeaponShot>(),Bounds);
+            peak=Math.Max(peak,world.Bullets.Count);
+        }
+        timer.Stop();Check(peak>300 && peak<6100);Check(world.Enemies.Count==80);
+        Console.WriteLine($"  Dense combat: {world.Enemies.Count} enemies, peak {peak} bullets, 1800 steps in {timer.ElapsedMilliseconds} ms.");
     }
 }

@@ -22,6 +22,8 @@ public sealed class Sound
         _effects["dash"]=Synthesize(.22,480,110,.65);
         _effects["hit"]=Synthesize(.18,220,50,.7);
         _effects["click"]=Synthesize(.05,1100,600,.05);
+        _effects["upgrade"]=Synthesize(.35,600,1400,.02);
+        _effects["level"]=Synthesize(.6,350,1600,.02);
         PlayMusic();
     }
     public void PlayMusic()

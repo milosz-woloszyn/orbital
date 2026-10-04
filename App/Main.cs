@@ -17,16 +17,18 @@ public partial class Main : Control
     private Control _deadPanel=null!;
     private string _view="arena",_previousView="arena";
     private float _displayDemand,_updateTimer,_toastTime;
-    public bool IsPaused=>_view!="arena";
+    public bool IsPaused=>_view!="arena" || (!IsLaboratory && Simulation.IsDestroyed);
     public string CurrentView=>_view;
     private bool _smoke;
     private bool _quitting;
 
     public override void _Ready()
     {
+        GetWindow().Title="ORBITAL — przetrwanie i laboratorium";
         GetTree().AutoAcceptQuit=false;
         Theme=Style.CreateTheme(); Art.Load();
-        _smoke=OS.GetCmdlineUserArgs().Contains("--smoke");
+        _gameSmoke=OS.GetCmdlineUserArgs().Contains("--game-smoke");
+        _smoke=OS.GetCmdlineUserArgs().Contains("--smoke") || _gameSmoke;
         Controls=new Bindings(!_smoke);
         if(_smoke)
         {
@@ -36,13 +38,15 @@ public partial class Main : Control
         }
         _audio=new Sound(this,Controls);
         ResetShip(false);
-        BuildArena();BuildEditor();BuildSettings();
-        foreach(var screen in new[] { _arenaView,_editorView,_settingsView })
+        BuildArena();BuildEditor();BuildSettings();BuildMenu();BuildRunHud();
+        foreach(var screen in new[] { _arenaView,_editorView,_settingsView,_menuView })
             screen.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _toast=Style.Label(this,"",16,Size.Y-22,Size.X-32,22,12,Style.Amber,true);
         Style.Bottom(Style.StretchRight(_toast));
-        ShowView("arena");
-        if(_smoke) CallDeferred(nameof(StartSmoke));
+        ShowView(_smoke || OS.GetCmdlineUserArgs().Contains("--lab")?"arena":"menu");
+        Flight.FrameFinished+=UpdateRun;
+        if(_gameSmoke)CallDeferred(nameof(StartGameSmoke));
+        else if(_smoke) CallDeferred(nameof(StartSmoke));
     }
     public override void _Notification(int what)
     { if(what==NotificationWMCloseRequest)QuitCleanly(); }
@@ -76,10 +80,12 @@ public partial class Main : Control
             Dead=()=>Simulation.IsDestroyed,Shield=()=>(float)Simulation.Shield,Audio=_audio
         };
         _arenaView.AddChild(Flight);Flight.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        Header(_arenaView,"ORBITAL  /  LABORATORIUM 01","Swobodny lot","");
+        _arenaTag=Style.Label(_arenaView,"ORBITAL  /  LABORATORIUM 01",26,16,900,22,12,Style.Cyan,true);
+        _arenaTitle=Style.Label(_arenaView,"Swobodny lot",24,40,850,42,32);
         Style.Right(Style.Button(_arenaView,"Ustawienia",1136,24,140,46,ShowSettings));
-        Style.Right(Style.Button(_arenaView,"Statek  ↗",1288,24,152,46,()=>ShowView("editor"),true));
+        _shipButton=Style.Right(Style.Button(_arenaView,"Statek  ↗",1288,24,152,46,()=>{ if(IsLaboratory)ShowView("editor"); },true));
         var console=Style.Right(Style.StretchBottom(Style.Group(_arenaView,1136,96,304,630)));
+        _labConsole=console;
         var consoleBack=Style.PanelAt(console,0,0,304,630);Style.StretchBottom(consoleBack);
         Style.Label(console,"KONSOLA TESTOWA",20,20,260,26,13,Style.Cyan,true);
         Style.Label(console,"Twoje laboratorium",20,55,260,30,23);
@@ -126,27 +132,30 @@ public partial class Main : Control
     public void ResetShip(bool notify=true)
     {
         Layout=ShipLayout.CreateStarter();Simulation=new ShipSimulation(Layout);Simulation.Refill();Simulation.Refresh();
-        Flight?.Reset(); Grid?.Cancel(); Grid?.Select(null);
+        Flight?.Reset(); Grid?.Cancel(); Grid?.Select(null);ResizeShipGrid?.Invoke();
         if(notify) { Toast("Przywrócono blaster, rakietę i podstawowe systemy.");AfterEdit(); }
     }
     public void ShowView(string view)
     {
         if(_view=="editor" && view!="editor")Grid.Cancel();
         _view=view;_arenaView.Visible=view=="arena";_editorView.Visible=view=="editor";_settingsView.Visible=view=="settings";
+        if(_menuView!=null)_menuView.Visible=view=="menu";
         Input.MouseMode=Input.MouseModeEnum.Visible;
         GetViewport().GuiReleaseFocus();
-        if(view=="editor") { Simulation.Refresh();UpdateInspector();Grid.QueueRedraw(); }
+        if(view=="editor") { Simulation.Refresh();ResizeShipGrid?.Invoke();UpdateInspector();Grid.QueueRedraw(); }
     }
     public void Toast(string text)
     { if(_toast==null)return; _toast.Text=text;_toastTime=5; }
     public void AfterEdit()
     {
         Simulation.Refresh();UpdateInspector();Grid.QueueRedraw();UpdateEditorStats();
+        if(!IsLaboratory)PopulateCatalog(_catalogFilter);
         if(!Grid.HasPlacement)UpdateToolHint();
     }
     public override void _Process(double delta)
     {
         if(_arenaView==null)return;
+        UpdateRunHud();UpdateGridScroll((float)delta);
         float dt=(float)delta;_displayDemand=Mathf.Lerp(_displayDemand,(float)Simulation.Demand,1-Mathf.Exp(-dt*5));
         _updateTimer-=dt;
         if(_toastTime>0) { _toastTime-=dt;if(_toastTime<=0)_toast.Text=""; }
@@ -165,7 +174,7 @@ public partial class Main : Control
         _flightStatus.Text=$"SYSTEMY  {ready:00} / {Layout.Modules.Count:00} GOTOWYCH\n"+(ready==Layout.Modules.Count?"ŁĄCZNOŚĆ  OK":"SPRAWDŹ PORTY W STOCZNI");
         _flightStatus.AddThemeColorOverride("font_color",ready==Layout.Modules.Count?Style.Green:Style.Amber);
         _deadPanel.Visible=Simulation.IsDestroyed;
-        _bindingsHint.Text=$"RUCH {Controls.Name("up")}/{Controls.Name("left")}/{Controls.Name("down")}/{Controls.Name("right")}   •   ZRYW {Controls.Name("dash")}   •   BROŃ {Controls.Name("primary")} / {Controls.Name("secondary")}   •   STOCZNIA {Controls.Name("ship")}   •   MENU {Controls.Name("menu")}";
+        _bindingsHint.Text=$"RUCH {Controls.Name("up")}/{Controls.Name("left")}/{Controls.Name("down")}/{Controls.Name("right")}   •   ZRYW {Controls.Name("dash")}   •   BROŃ {Controls.Name("primary")} / {Controls.Name("secondary")}   •   STOCZNIA {(IsLaboratory?Controls.Name("ship"):"PO AWANSIE")}   •   MENU {Controls.Name("menu")}";
         if(_view=="editor") UpdateEditorStats();
     }
     public override void _UnhandledInput(InputEvent ev)
@@ -181,7 +190,11 @@ public partial class Main : Control
             GetViewport().SetInputAsHandled();return;
         }
         if(ev.IsActionPressed("ship") && _view!="settings")
-        { ShowView(_view=="editor"?"arena":"editor");GetViewport().SetInputAsHandled();return; }
+        {
+            if(_view=="editor")RequestReturnToFlight();
+            else if(IsLaboratory && _view=="arena")ShowView("editor");
+            GetViewport().SetInputAsHandled();return;
+        }
         if(_view!="editor" || GetViewport().GuiGetFocusOwner() is LineEdit)return;
         if(ev.IsActionPressed("pickup"))
         { Grid.PickUpHovered();GetViewport().SetInputAsHandled();return; }

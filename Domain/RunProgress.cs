@@ -5,7 +5,7 @@ public sealed record ShopOffer(ModuleKind Kind, int Price)
     public bool Sold { get; internal set; }
 }
 public sealed record StoredModule(int StockId, ModuleKind Kind, int Level=1, int Priority=5,
-    WeaponMode Mode=WeaponMode.Unassigned, double Burst=0, double Gap=0);
+    WeaponMode Mode=WeaponMode.Unassigned, double Burst=0, double Gap=0, double? Energy=null, double? Shield=null);
 
 /// <summary>One run's economy. Overflow XP is processed as separate, ordered level-up visits.</summary>
 public sealed class RunProgress
@@ -60,7 +60,7 @@ public sealed class RunProgress
         if(offer.Kind==ModuleKind.Shield)inventory.Add(new(nextStock++,ModuleKind.ShieldControl,Priority:9));
         return EditResult.Ok;
     }
-    public EditResult Place(int stockId,ShipLayout layout,Cell cell,int rotation,out ShipModule? module)
+    public EditResult Place(int stockId,ShipLayout layout,Cell cell,int rotation,out ShipModule? module,ShipSimulation? simulation=null)
     {
         module=null;
         var stock=inventory.FirstOrDefault(m=>m.StockId==stockId);
@@ -72,12 +72,14 @@ public sealed class RunProgress
         var mode=stock.Mode;int placedId=module.Id;
         if(mode is WeaponMode.Left or WeaponMode.Right && layout.Modules.Any(m=>m.Id!=placedId && m.WeaponMode==mode))mode=WeaponMode.Unassigned;
         if(module.Definition.IsWeapon)layout.ConfigureWeapon(module.Id,mode,stock.Burst,stock.Gap);
+        if(simulation!=null)simulation.RestoreReserves(module.Id,stock.Energy,stock.Shield);
         inventory.Remove(stock);return EditResult.Ok;
     }
-    public bool Store(ShipLayout layout,int id)
+    public bool Store(ShipLayout layout,int id,ShipSimulation? simulation=null)
     {
         if(Ended || !PanelOpen || layout.Find(id) is not { } module)return false;
-        inventory.Add(new(nextStock++,module.Kind,module.Level,module.Priority,module.WeaponMode,module.BurstDuration,module.BurstGap));
+        var state=simulation?.Status.GetValueOrDefault(id);
+        inventory.Add(new(nextStock++,module.Kind,module.Level,module.Priority,module.WeaponMode,module.BurstDuration,module.BurstGap,state?.StoredEnergy,state?.Shield));
         return layout.Remove(id);
     }
     public bool Upgrade(ShipLayout layout,int id)
